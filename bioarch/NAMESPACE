@@ -3,3 +3,8 @@
 export(ba_checkyn)
 export(ba_logspot)
 export(ba_ynq)
+export(exportLotDataSet)
+export(getclass)
+export(loadBrukerXML)
+export(plotclass_v2)
+export(printUsage)

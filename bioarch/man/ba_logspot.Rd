@@ -2,7 +2,7 @@
 % Please edit documentation in R/ba_logspot.R
 \name{ba_logspot}
 \alias{ba_logspot}
-\title{Create a structure that holds the q2e parameters}
+\title{Log a new spot position}
 \usage{
 ba_logspot(spot)
 }
@@ -10,7 +10,7 @@ ba_logspot(spot)
 \item{spot}{the spot address (e.g. "A12")}
 }
 \description{
-Create a structure that holds the q2e parameters
+Log a new spot position
 }
 \examples{
 ba_logspot("A12")

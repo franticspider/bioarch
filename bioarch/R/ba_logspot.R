@@ -1,12 +1,10 @@
-#' Create a structure that holds the q2e parameters
+#' Log a new spot position
 #' 
 #' @param spot the spot address (e.g. "A12")
 #' @keywords platemap
 #' @export
 #' @examples
 #' ba_logspot("A12")
-
-
 ba_logspot <- function(spot){
 
 # 	https://docs.google.com/a/york.ac.uk/spreadsheet/pub?key=0Ag83-Eguk23ldDYzSzRocWZpMkFtQWxHNW9ySGhzMWc&output=html
@@ -15,8 +13,6 @@ ba_logspot <- function(spot){
 # My test spreadsheet is here: 
 #https://docs.google.com/spreadsheets/d/1N8gnNY4TO8qoYWoM-25BlOjXpXB21Ol5nnpCZYWqZG8/edit#gid=1474463154
 
-
-	
 
 	answer <- ba_ynq("Do you want to create a new platemap?")
 
@@ -84,8 +80,5 @@ ba_logspot <- function(spot){
 		
 
 	}
-
-
-
 
 }
