@@ -10,7 +10,7 @@ loadBrukerXML(xml)
 load Bruker dataset via xml
 }
 \examples{
-zloadBruker("Bruker.xml")
+loadBrukerXML("Bruker.xml")
 }
 \keyword{MALDIquant}
 \keyword{platemap}

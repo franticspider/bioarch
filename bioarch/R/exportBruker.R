@@ -50,7 +50,7 @@ printUsage <- function(){
 #' @keywords MALDIquant platemap
 #' @export
 #' @examples
-#' zloadBruker("Bruker.xml")
+#' loadBrukerXML("Bruker.xml")
 loadBrukerXML <- function(xml){
 	mydata = MALDIquantForeign::importBrukerFlex(xml)
 	return (mydata)
@@ -106,6 +106,13 @@ listData <- function(data){
 	}
 }
 
+#' Export Bruker data to files, with lot Number as part of the filename
+#' 
+#' @param path the path to the Bruker data set
+#' @keywords Bruker 
+#' @export
+#' @examples
+#' exportDataSetTab("/home/anon/Bruker/20151105sample")
 # exportDataSetTab USAGE:
 #	this function will create files either with the file extension .txt, or using the fullname in the Bruker format.
 #

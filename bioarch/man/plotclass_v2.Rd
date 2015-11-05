@@ -34,7 +34,7 @@ plotclass_v2(fn, onepdf = F, refdata, testdata, threshold, uselag = TRUE,
 Plot a classification of a Bruker data set
 }
 \examples{
-ba_checkyn("how are you feeling?")
+plotclass_v2() [TODO: fill this example in!]
 }
 \keyword{question}
 

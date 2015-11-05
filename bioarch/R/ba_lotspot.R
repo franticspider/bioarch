@@ -18,14 +18,15 @@
 #/* along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-#' Get an arbitrary answer to a question
+#' Export Bruker data to files, with lot Number as part of the filename
 #' 
-#' @param data the path to the Bruker data set
-#' @keywords question
+#' @param path the path to the Bruker data set
+#' @param lotno the lot number of the data set (checked in the function)
+#' @keywords Bruker 
 #' @export
 #' @examples
-#' ba_checkyn("how are you feeling?")
-exportLotDataSet <-function(path,lotno=0,txt=TRUE){
+#' exportLotData("/home/anon/Bruker/20151105sample",123456)
+exportLotData <-function(path,lotno=0,txt=TRUE){
 
 
     message("Loading Bruker Plate Data from file: ",path)
@@ -33,25 +34,63 @@ exportLotDataSet <-function(path,lotno=0,txt=TRUE){
 
    
     a<-ba_ynq(sprintf("Is the lot number %06d correct?",lotno))
-    if(a=="y"){
+    if(a=="n"){
+    	lotno <- ba_checkyn("Enter the lot number (eg \"123456\")")
+    	#TODO: Check that this is valid
     }
 
 
     message("\nNow we need to specify which spots belong to lot number ",lotno)
+    
+    
+    message("Please enter at least one spot position")
+    finspot = F
+    nspots = 0
+    while(!finspot){
+    
+    	if(nspots==0){#INITIALISE
+    		sp <- ba_checkyn("Enter the first spot position (eg \"M9\")")
+    		spots = c(sp)
+    	}
+    	else{
+    		sp <- ba_checkyn("Enter the next spot position (eg \"M10\")")
+    		spots = c(spots,sp)	
+    	}
+    	nspots = nspots+1
+    
+    	message("so far we have ")
+    	ss <- print(spots)
+    	a<-ba_ynq("Is that all the spots")
+    	if(a=="y")
+    		finspot=T
+    }
+
+	#make sure we have a csv directory...
+	dir.create(file.path(getwd(), "csv"), showWarnings = FALSE)
 
 
-
-	for(i in 1:length(data)){
-		outfn <- sprintf("csv/%s",data[[i]]@metaData$fullName)
-		if(txt){
-			#replace the '.' character with '_'
-			outfn <- gsub("[.]","_",outfn)
-
-			#append the '.txt'
-			outfn <- sprintf("%s.txt",outfn)
+	#TODO: make a function out of this, pass spots in...
+	for(spot in 1:length(spots)){
+	
+		i <- indexFromPlatePos(data,spots[spot])
+	
+		if(i==-1){
+			message(sprintf("Plate position %s was not found in this data set",spots[spot]))
 		}
-		message(sprintf("Exporting %s to %s",data[[i]]@metaData$fullName,outfn))
-		MALDIquantForeign::exportTab(data[[i]], file = outfn, force=TRUE, col.names = FALSE, sep = "\t")
+		else{
+	
+			message(sprintf("Index of plate position %s is %d",spots[spot],i))
+			outfn <- sprintf("csv/%s_lot%s",data[[i]]@metaData$fullName,lotno)
+			if(txt){
+				#replace the '.' character with '_'
+				outfn <- gsub("[.]","_",outfn)
+
+				#append the '.txt'
+				outfn <- sprintf("%s.txt",outfn)
+			}
+			message(sprintf("Exporting %s to %s",data[[i]]@metaData$fullName,outfn))
+			MALDIquantForeign::exportTab(data[[i]], file = outfn, force=TRUE, col.names = FALSE, sep = "\t")
+		}
 	}
 
 }

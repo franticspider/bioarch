@@ -69,24 +69,11 @@ install("bioarch")
 ############################
 
 
-
-
-
 #Then to download:
 #install_github('franticspider/q2e')
 
 
-
-
-
-
-
-
 #TODO: Somehow check the outputs with the outputs of the original C code...
-
-
-
-
 
 
 #now run the error tests (see 'q2e_tests.R')

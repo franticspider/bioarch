@@ -31,7 +31,7 @@ library("MALDIquant")
 mydata<-NULL
 
 #TODO: write this function
-printUsage <- function(){
+printUsage_flame <- function(){
 message("=============================================================")
 message("This file is part of flamePlot version 1.0.0")
 message("Typical usage is:\n")
@@ -508,7 +508,7 @@ plotclass<-function(fn,refdata,testdata,threshold,uselag=TRUE,thislb,thisub,lbl,
 #' @keywords question
 #' @export
 #' @examples
-#' ba_checkyn("how are you feeling?")
+#' plotclass_v2() [TODO: fill this example in!]
 #PROOF OF CONCEPT - CCF AGAINST A SET OF SPOTS (WE'LL NEED REFERENCE DATA TO MAKE THIS WORK)
 plotclass_v2<-function(fn,onepdf=F,refdata,testdata,threshold,uselag=TRUE,thislb,thisub,lbl,ubl,classnames){
 
