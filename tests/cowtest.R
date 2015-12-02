@@ -1,6 +1,7 @@
 library("q2e")
 library("bioarch")
 
+source("plotseqpeaks.R")
 
 #Specify the `margins' of the sample 
 moff = 1

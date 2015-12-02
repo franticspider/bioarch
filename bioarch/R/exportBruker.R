@@ -83,13 +83,6 @@ indexFromPlatePos <- function(data,posString){
 	return(idx)
 }
 
-
-exportPlateMapSpot <- function(mydata, cell, outfn){
-	ixz1 <- indexFromPlatePos(mydata,cell)
-	MALDIquantForeign::exportCsv(mydata[[ixz1]], file = outfn, force=TRUE, col.names = FALSE)
-
-}
-
 ###EXAMPLE USAGE###
 #	mydata<-loadBruker('20131024_TedG1')
 #	exportPlateMap(mydata, 'B2','plateB2.txt')
