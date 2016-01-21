@@ -2,7 +2,7 @@
 % Please edit documentation in R/ba_indexFromPlatePos.R
 \name{ba_indexFromPlatePos}
 \alias{ba_indexFromPlatePos}
-\title{# e.g. L9 in '20131016_Oxford_Samples.L9'Get an arbitrary answer to a question}
+\title{Get the index of a platemap location in a MALDIquant data object}
 \usage{
 ba_indexFromPlatePos(data, posString, verbose = F)
 }
@@ -14,7 +14,7 @@ ba_indexFromPlatePos(data, posString, verbose = F)
 \item{verbose}{verbose output if True}
 }
 \description{
-# e.g. L9 in '20131016_Oxford_Samples.L9'Get an arbitrary answer to a question
+Get the index of a platemap location in a MALDIquant data object
 }
 \examples{
 ba_indexFromPlatePos("/home/anon/brukerdata/20151202",'C9')

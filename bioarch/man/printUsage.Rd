@@ -2,16 +2,17 @@
 % Please edit documentation in R/exportBruker.R
 \name{printUsage}
 \alias{printUsage}
-\title{print the usage of exportBruker}
+\title{DEPRECIATED print the usage of exportBruker}
 \usage{
 printUsage()
 }
 \description{
-print the usage of exportBruker
+DEPRECIATED print the usage of exportBruker
 }
 \examples{
 printUsage()
 }
+\keyword{Bruker}
 \keyword{MALDIquant}
 \keyword{platemap}
 

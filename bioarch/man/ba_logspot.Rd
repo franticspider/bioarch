@@ -2,7 +2,7 @@
 % Please edit documentation in R/ba_logspot.R
 \name{ba_logspot}
 \alias{ba_logspot}
-\title{Log a new spot position}
+\title{DEPRECIATED: Log a new spot position}
 \usage{
 ba_logspot(spot)
 }
@@ -10,7 +10,7 @@ ba_logspot(spot)
 \item{spot}{the spot address (e.g. "A12")}
 }
 \description{
-Log a new spot position
+DEPRECIATED: Log a new spot position
 }
 \examples{
 ba_logspot("A12")

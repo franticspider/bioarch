@@ -22,14 +22,13 @@
 
 
 #load the library
-library("MALDIquant")
+require("MALDIquant")
 
 #mydata<-NULL
 
-#' print the usage of exportBruker
+#' DEPRECIATED print the usage of exportBruker
 #' 
-#' @keywords MALDIquant platemap
-#' @export
+#' @keywords MALDIquant platemap Bruker
 #' @examples
 #' printUsage()
 printUsage <- function(){
@@ -45,43 +44,7 @@ printUsage <- function(){
 
 
 
-#' load Bruker dataset via xml
-#' 
-#' @keywords MALDIquant platemap
-#' @export
-#' @examples
-#' loadBrukerXML("Bruker.xml")
-loadBrukerXML <- function(xml){
-	mydata = MALDIquantForeign::importBrukerFlex(xml)
-	return (mydata)
-}
 
-# Function to get the index of a platemap location in a MassSpectrum Object
-# Assume the platemap location is after the '.'
-# e.g. L9 in '20131016_Oxford_Samples.L9'
-indexFromPlatePos <- function(data,posString){
-	idx<--1
-	#idx <- sapply(1:length(data), function(i){
-	for ( i in 1:length(data)){
-		#graphics:::lines(x=times(x), y=(e[,i])^2, col=cols[i])
-		sname <- data[[i]]@metaData$sampleName
-		name  <- data[[i]]@metaData$fullName
-		lenpos <- nchar(posString)
-		subname <- substring(name,nchar(sname)+2,nchar(sname)+4)
-		#message(sprintf("sname is %s, name is %s, lenpos is %d, subname is %s = %d char",sname,name,lenpos,subname,nchar(subname)))
-		if(nchar(subname)==nchar(posString)){
-			if(posString==subname){
-				idx<-i
-				message(sprintf("Match found at %d: %s %s",i,name,posString))
-				break	
-			}
-		}
-	}
-
-	message(sprintf("Returning %d",idx))
-
-	return(idx)
-}
 
 ###EXAMPLE USAGE###
 #	mydata<-loadBruker('20131024_TedG1')
@@ -89,8 +52,9 @@ indexFromPlatePos <- function(data,posString){
 
 
 #TODO: want to be able to export a WHOLE bruker dataset to multiple csv files 
-message('Creating directory \'csv\'')
-system('mkdir -p csv')
+#TODO: This needs to be called from within the functions that need it!
+#message('Creating directory \'csv\'')
+#system('mkdir -p csv')
 
 listData <- function(data){
 	for(i in 1:length(data)){
@@ -142,13 +106,6 @@ exportDataSetCsv <-function(data){
 }
 
 
-
-#printUsage()
-
-
-exportLotDataSet <-function(data,txt=TRUE){
-
-}
 
 
 

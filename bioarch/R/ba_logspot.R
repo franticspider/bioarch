@@ -1,8 +1,7 @@
-#' Log a new spot position
+#' DEPRECIATED: Log a new spot position
 #' 
 #' @param spot the spot address (e.g. "A12")
 #' @keywords platemap
-#' @export
 #' @examples
 #' ba_logspot("A12")
 ba_logspot <- function(spot){

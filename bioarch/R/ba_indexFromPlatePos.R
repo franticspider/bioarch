@@ -1,7 +1,9 @@
 
 # Function to get the index of a platemap location in a MassSpectrum Object
 # Assume the platemap location is after the '.' in data[[i]]@metaData$fullName
-# e.g. L9 in '20131016_Oxford_Samples.L9'#' Get an arbitrary answer to a question
+# e.g. L9 in '20131016_Oxford_Samples.L9'
+
+#' Get the index of a platemap location in a MALDIquant data object
 #' 
 #' @param data the MALDIquant object holding the bruker data
 #' @param posString the spot postition, e.g. 'C9'

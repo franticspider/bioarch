@@ -13,7 +13,7 @@ ba_loadBruker(xml)
 load a bruker directory structure as a dataset
 }
 \examples{
-ba_loadBruker("/home/anon/brukerdata/20151202")
+data <- ba_loadBruker("/home/anon/brukerdata/20151202")
 }
 \keyword{bruker}
 

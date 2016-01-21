@@ -8,7 +8,7 @@
 #' @keywords bruker
 #' @export
 #' @examples
-#' ba_loadBruker("/home/anon/brukerdata/20151202")
+#' data <- ba_loadBruker("/home/anon/brukerdata/20151202")
 
 
 ba_loadBruker <- function(xml){
