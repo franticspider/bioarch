@@ -18,7 +18,7 @@
 #/* along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-library("MALDIquantForeign")
+require("MALDIquantForeign")
 #source("exportBruker.R")
 #source("flamePlot_3.R")
 
