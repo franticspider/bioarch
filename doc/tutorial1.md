@@ -10,16 +10,16 @@
 - the bioarch package
 - writing packages with devtools
 
+---
 
-
-------
 ##RUNNING R
 
+_Assuming R is installed..._
 
 First thing, we need to have a look at the different ways of running R
 
--from a command line
--in Rstudio
+- from a command line
+- in Rstudio
 
 RStudio is a great way to start, especially if you are used to GUIs. But there are occasions (such as when you are working remotely) where the command line is useful. 
 
