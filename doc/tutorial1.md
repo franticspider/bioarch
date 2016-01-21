@@ -61,17 +61,18 @@ Alternatively, at the command line (in the bottom left panel of RStudio) type
    install.packages("swirl")
 ```
 
-**REMEMBER!** *Installing* a package is not the same as *loading* a package so that you can use it. Think of installing a package as like buying a book and putting it on your bookshelf. You can't read it while it's on the shelf - you have to hold it first. Similarly, you have to load the package before you can use it
+**REMEMBER!** *Installing* a package is not the same as *loading* a package so that you can use it. Think of installing a package as like buying a book and putting it on your bookshelf. You can't read it while it's on the shelf - you have to hold it first. Similarly, you have to load the package before you can use it, using the `library` command:
 
 ```
-library(
+library("swirl")
+```
 
-------
-A really good way to get to know R basics is to use swirl:
+For more on swirl, see:
 
 [http://swirlstats.com/students.html]
 
 This is a set of interactive tutorials. Let's install that and go through a bit
+
 There's also an online course starting 18th Jan 2015 - it's free - coursera are pretty good:
 
 [https://www.coursera.org/learn/r-programming]
