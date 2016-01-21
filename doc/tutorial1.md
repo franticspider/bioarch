@@ -23,7 +23,7 @@ First thing, we need to have a look at the different ways of running R
 
 RStudio is a great way to start, especially if you are used to GUIs. But there are occasions (such as when you are working remotely) where the command line is useful. 
 
-OK, let's start RStudio
+OK, let's start RStudio. For more help, see:
 
 [https://www.rstudio.com/resources/training/online-learning/]
 
@@ -42,20 +42,29 @@ There are five levels of programming in R:
 - **R 'Core'**		This is the R programming language, operators functions etc. We'll have a look at how to learn this stuff over the next few sections
 
 
+###INSTALLING PACKAGES
 
-
------
-##INSTALLING PACKAGES
-
-Most of the time, you'll be installing packages from CRAN, since these are the most tried and tested ones. 
+Most of the time, you'll be installing packages from CRAN, since these are the most tried and tested ones. These are the easiest packages to install. 
 
 I'm going to show you two packages that you should know about:
 
-Swirl - Friendly R tutorials
-devtools - ways to help you oragnise your code into packages from the outset. 
+- **Swirl** - Friendly R tutorials
+- **devtools** - ways to help you oragnise your code into packages from the outset. (More of this)
 
-(We'll come back to swirl later)
+Let's install swirl using the RStudio menu.
+   *tools->install packages...*
+gets you to a dialog box. Type ```swirl``` into the 'Packages' text-entry field. 
 
+Alternatively, at the command line (in the bottom left panel of RStudio) type
+
+```
+   install.packages("swirl")
+```
+
+**REMEMBER!** *Installing* a package is not the same as *loading* a package so that you can use it. Think of installing a package as like buying a book and putting it on your bookshelf. You can't read it while it's on the shelf - you have to hold it first. Similarly, you have to load the package before you can use it
+
+```
+library(
 
 ------
 A really good way to get to know R basics is to use swirl:
@@ -63,11 +72,9 @@ A really good way to get to know R basics is to use swirl:
 [http://swirlstats.com/students.html]
 
 This is a set of interactive tutorials. Let's install that and go through a bit
+There's also an online course starting 18th Jan 2015 - it's free - coursera are pretty good:
 
-
-
-
-
+[https://www.coursera.org/learn/r-programming]
 
 ------
 FILES
