@@ -4,7 +4,7 @@
 ##SUMMARY
 
 1. Running R / RStudio
-- Installing CRAN packages
+- Working with packages
 - learning R with swirl
 - Installing github packages
 - the bioarch package
@@ -27,18 +27,20 @@ OK, let's start RStudio
 
 [https://www.rstudio.com/resources/training/online-learning/]
 
-------
-##ADDING AND REMOVING PACKAGES
+---
+##WORKING WITH PACKAGES
+
+
+
 
 There are five levels of programming in R:
 
-- R Core			This is the R programming language, operators functions etc. 
-- CRAN packages		Next level ('The Comprehensive R Archive Network')
-- Other packages	Often it's easier to make more specialist packages public outside of CRAN
-- local packages	Packages you share on a local network - proprietary stuff
-- your own code		Programs you'd only use yourself. 
+1. **your own code**		Programs you'd only use yourself, for analysing and presenting your own data. Before we do _any_ programming, we should generally check if a solution exists elsewhere!
+- **shared code (bad practice)**	Programs you share locally with colleagues - proprietary stuff. It is very easy to email programs to one another, but often this can cause problems if the programs don't work for one reson or another. It is very easy to lose track of the 'correct' version of your code, and it is often poorly documented. 
+- **packages**	It's not much more work to group your programs together into a package that you develop as a group. We'll show how to do this using github below. The advantages are that it is easier to document what you are doing as you go along, and you can timestamp versions of the code so it is easy to keep track of how things work at any point in the development of the software. 
+- **CRAN packages**		Next level ('The Comprehensive R Archive Network'). Specialist programs, maintained by the R community. Rigorously tested, very powerful, but sometimes not very well documented and quirky to use. The requirements for CRAN hosting can be quite challenging to meet, but that's why it's the 'gold standard'!
+- **R 'Core'**		This is the R programming language, operators functions etc. We'll have a look at how to learn this stuff over the next few sections
 
-Before we do _any_ programming, we should generally check if a solution exists elsewhere!
 
 
 
