@@ -9,6 +9,7 @@
 - Installing github packages
 - the bioarch package
 - writing packages with devtools
+- tips
 
 ---
 
@@ -51,7 +52,12 @@ I'm going to show you two packages that you should know about:
 - **Swirl** - Friendly R tutorials
 - **devtools** - ways to help you oragnise your code into packages from the outset. (More of this)
 
-Let's install swirl using the RStudio menu.
+---
+##Learning R with Swirl
+
+Packages can be about anything. 'Swirl' is a good package to start with, because it contains tutorials for learning R.
+
+Let's install swirl using the RStudio menu: 
    *tools->install packages...*
 gets you to a dialog box. Type ```swirl``` into the 'Packages' text-entry field. 
 
@@ -77,52 +83,46 @@ There's also an online course starting 18th Jan 2015 - it's free - coursera are 
 
 [https://www.coursera.org/learn/r-programming]
 
-------
-FILES
-
-It gets tiring writing the same stuff over and again. 
-
-Easier to write the code in a file - and load that using
-
-source("file.R")
 
 
+---
+##Installing github packages
 
-------
-FUNCTIONS
+Packages that are not hosted by CRAN require a little more work to install. Fortunately, the 'devtools' package helps with this. Devtools *is* hosted by CRAN, so we can install it in the same way we installed Swirl. 
 
-often you want to manipulate data in the same way. this is done with *functions*:
+devtools is a great thing for building packages. If you plan to share your software, you should **begin** by creating a package. It will save you time in the long run! If you've ever come back to some code, or even a complicated spreadsheet and wondered how it works, you should know what I mean. Here's a great blog post about writing packages (if a little out of date):
 
-```
-addsquare <- function(x){
-	y <- x*x
-	z <- x+y
-	return (z)
-}
-```
+[http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/]
 
-------
-DEVTOOLS
+To demonstrate this, we're going to load the `bioarch` package that this tutorial came with.
+Here's the command-line for installing and loading devtools (you can use the RStudio menu if you like):
+ 
+ `> install.packages("devtools")`
+ 
+ `> library(devtools)`
+ 
+Then you can use the `install_github` function to install bioarch:
+ 
+ `> install_github("franticspider/bioarch")`
+ 
+Of course, you'll only need to do that once for your R installation. After that, whenever you want to use bioarch, simply enter: 
+ 
+ `> library("bioarch")`
 
-devtools is a great thing for building packages. I'm talking about this now because 
+We'll talk further about this next time, but rember, if a package is written entirely in R, then install will work no matter what platform you are using. Extra steps have to be taken if the R package uses programs written in other languages (yes, R can do that)
+For example, the q2e package we've built uses Julie Wilson's C code, so we have to take a few more steps to make it work in Windows
 
-http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/
 
-NB: If a package is written entirely in R, then install will work no matter what platform you are using. 
+---
+##Tips
 
-Extra steps have to be taken if the R package uses programs written in other languages (yes, R can do that)
-
-For example, the q2e package we've built uses Julie Wilson's C code, so we have to 
-
-------
-LISTING PACKAGES
+###LISTING PACKAGES
 
 installed.packages() 
 
 will list everything.
 
-------
-REMOVING PACKAGES.
+###REMOVING PACKAGES.
 
 should be simple:
 
