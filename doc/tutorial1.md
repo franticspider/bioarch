@@ -7,8 +7,6 @@
 - Working with packages
 - learning R with swirl
 - Installing github packages
-- the bioarch package
-- writing packages with devtools
 - tips
 
 ---
