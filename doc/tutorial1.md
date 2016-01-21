@@ -1,5 +1,5 @@
 
-#Basics of R for non-programmers
+#Tutorial 1: Basics of R for non-programmers
 
 ##SUMMARY
 
@@ -90,9 +90,7 @@ There's also an online course starting 18th Jan 2015 - it's free - coursera are 
 
 Packages that are not hosted by CRAN require a little more work to install. Fortunately, the 'devtools' package helps with this. Devtools *is* hosted by CRAN, so we can install it in the same way we installed Swirl. 
 
-devtools is a great thing for building packages. If you plan to share your software, you should **begin** by creating a package. It will save you time in the long run! If you've ever come back to some code, or even a complicated spreadsheet and wondered how it works, you should know what I mean. Here's a great blog post about writing packages (if a little out of date):
-
-[http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/]
+devtools is a great thing for building packages. If you plan to share your software, you should **begin** by creating a package. It will save you time in the long run! If you've ever come back to some code, or even a complicated spreadsheet and wondered how it works, you should know what I mean. Using devtools and another package called roxygen makes it super easy to maintain your programs in a package. 
 
 To demonstrate this, we're going to load the `bioarch` package that this tutorial came with.
 Here's the command-line for installing and loading devtools (you can use the RStudio menu if you like):
@@ -103,7 +101,7 @@ Here's the command-line for installing and loading devtools (you can use the RSt
  
 Then you can use the `install_github` function to install bioarch:
  
- `> install_github("franticspider/bioarch")`
+ `> install_github("franticspider/bioarch",subdir = "bioarch")`
  
 Of course, you'll only need to do that once for your R installation. After that, whenever you want to use bioarch, simply enter: 
  
@@ -111,22 +109,28 @@ Of course, you'll only need to do that once for your R installation. After that,
 
 We'll talk further about this next time, but rember, if a package is written entirely in R, then install will work no matter what platform you are using. Extra steps have to be taken if the R package uses programs written in other languages (yes, R can do that)
 For example, the q2e package we've built uses Julie Wilson's C code, so we have to take a few more steps to make it work in Windows
+Here's a great blog post about writing packages (if a little out of date):
 
+[http://hilaryparker.com/2014/04/29/writing-an-r-package-from-scratch/]
 
 ---
 ##Tips
 
-###LISTING PACKAGES
+###getting help
 
-installed.packages() 
+This is **much** easier in Rstudio than the command line. Hit the 'help' tab in the bottom right panel. The help files for each package is shown. If you've just installed a package, you might need to hit the refresh icon to see it.  
+
+###Listing packages
+
+	installed.packages() 
 
 will list everything.
 
-###REMOVING PACKAGES.
+###Removing packages
 
 should be simple:
 
-remove.packages("devtools")
+	remove.packages("devtools")
 
 If the package isn't there, you'll get this error:
 
@@ -134,11 +138,11 @@ If the package isn't there, you'll get this error:
 
 sometimes the package to be removed isn't in the usual directory. If you think it's still there do this:
 
-.libPaths()
+	.libPaths()
 
 which will show all the paths that packages *can* be on. You can list these directories in the remove step like this:
 
-remove.packages("devtools","/usr/lib/R/library")
+	remove.packages("devtools","/usr/lib/R/library")
 
 
 
