@@ -1,6 +1,10 @@
 # bioarch
 R library of utilities for Bioarch research group, University of York, UK
 
+## Tutorials
+
+are avalable in the [doc](doc) folder. Installation instructions are contained in [doc/tutorial1.md](doc/tutorial1.md)
+
 ## MS Plate Logging
 
 ## These utilities allow users to log mass spectra samples
