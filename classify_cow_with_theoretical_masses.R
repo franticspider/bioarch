@@ -27,6 +27,57 @@ library("bioarch")
 
 
 
+
+
+#' Plot a classification of a Bruker data set
+#' 
+#' @param fn the pdf file name
+#' @param onepdf whether to print the analysis into a single file or not
+#' @param refdata the reference data that the classification is based on
+#' @param testdata the data that is being classified
+#' @param threshold classification threshold
+#' @param uselag whether to calculate the lag
+#' @param thislb lower bound 1
+#' @param thisub upper bound 1
+#' @param lbl lower bound limit
+#' @param ubl upper bound limit
+#' @param classnames the names of the classes 
+#' @keywords question
+#' @export
+#' @examples
+#' plot_zooms_v1       (fn,onepdf=T,refdata,t1l,     0,        uselag=TRUE,LB,    UB,    lbl,ubl,classnames){
+#PROOF OF CONCEPT - CCF AGAINST A SET OF SPOTS (WE'LL NEED REFERENCE DATA TO MAKE THIS WORK)
+plot_zooms_v1<-function(fn,onepdf=F,refdata,testdata,threshold,uselag=TRUE,thislb,thisub,lbl,ubl,classnames){
+
+
+	#create data structures to hold the correlation and lag values:
+	cordata <- lbl
+	lagdata <- lbl
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 getclass <- function(idx,fn){
 	name = "unknown"
 	t <- read.table(fn,sep='\t')
@@ -45,15 +96,11 @@ getclass <- function(idx,fn){
 moff = -1
 mrange = 4
 
-message("Loading known average sheep, goat and cow data")
+message("Loading known cow data")
 #fallowG9<- import('../FallowDeer/Fallow deer_0_G9.txt')
 #fallowH9<- import('../FallowDeer/Fallow deer_0_H9.txt')
 #fallowI9<- import('../FallowDeer/Fallow deer_0_I9.txt')
 
-if(!exists("sheep"))
-sheep <- import("/home/sjh/Desktop/sjh/bioarch/SF/SFData/averaged/Averaged Sheep Spectrum.txt")
-if(!exists("goat"))
-goat <- import("/home/sjh/Desktop/sjh/bioarch/SF/SFData/averaged/Averaged Goat Spectrum.txt")
 if(!exists("cow"))
 cow <- import("/home/sjh/Desktop/sjh/bioarch/SF/SFData/averaged/Averaged Cow Spectrum.txt")
 
@@ -61,18 +108,6 @@ cow <- import("/home/sjh/Desktop/sjh/bioarch/SF/SFData/averaged/Averaged Cow Spe
 
 message("Loading ref vals for sheep, goat and cow")
 massTable<-read.table('/home/sjh/Desktop/sjh/bioarch/SF/SFData/refmasses.tsv')
-
-sheepTable<-massTable[grep("Sheep",massTable[,1]),]
-sheepVals<-as.integer(sheepTable[,3:ncol(sheepTable)])
-sheepLB<-sheepVals+moff
-sheepUB<-sheepVals+mrange
-
-
-goatTable<-massTable[grep("Goat",massTable[,1]),]
-goatVals<-as.integer(goatTable[,3:ncol(goatTable)])
-goatLB<-goatVals+moff
-goatUB<-goatVals+mrange
-
 
 cowTable<-massTable[grep("Cattle",massTable[,1]),]
 cowVals<-as.integer(cowTable[,3:ncol(cowTable)])
@@ -82,10 +117,10 @@ cowUB<-cowVals+mrange
 
 message("Creating combined data values")
 
-LB = sort(unique(c(sheepLB,goatLB,cowLB)))
-UB = sort(unique(c(sheepUB,goatUB,cowUB)))
-lbl = list(sheepLB,goatLB,cowLB)
-ubl = list(sheepUB,goatUB,cowUB)
+LB = sort(unique(cowLB))
+UB = sort(unique(cowUB))
+lbl = list(cowLB)
+ubl = list(cowUB)
 
  
 if(!exists("testdata"))
@@ -94,13 +129,44 @@ testdata <- bioarch_loadBrukerXML("/home/sjh/Desktop/sjh/bioarch/SF/SFData/20140
 t1 <- testdata[[1]]
 t1l <- list(t1)
 
-refdata <- list(sheep,goat,cow)
+#refdata <- list(cow)
 
-fn = sprintf("/home/sjh/plotclass.pdf",t1l[[1]]@metaData$name)
+#Need to sort the mapping from aa sequence to chemical formula - 
+#Is the charge always 1?
+#When does deamidation occur?
+#When does oxidation occur?
+#Do we generate formulae for ALL these, or is there an obvious subset? 
+
+
+
+sequences=c(
+#1191 
+"IGQPGAVGPAGIR",
+#1207 
+"IGQPGAVGPAGIR", #need to add an oxygen...
+#1426 
+"GIPGEFGLPGPAGAR",
+#1579 
+"GEPGPAGAVGPAGAVGPR",
+#2852 
+"", #this is missing!
+#3016 
+   "GPSGEPGTAGPPGTPGPQGLLGAPGFLGLPGSR",
+#or GPPGASGAPGPQGFQGPPGEPGEPGQTGPAGAR
+#3032
+   "GPSGEPGTAGPPGTPGPQGLLGAPGFLGLPGSR"
+#or GPPGASGAPGPQGFQGPPGEPGEPGQTGPAGAR
+)
+
+
+
+
+
+fn = sprintf("/home/sjh/plotcow_theory.pdf",t1l[[1]]@metaData$name)
 
 pdf(file=fn,width = 14,height=8)
 
-for(ii in 1:length(testdata)){
+for(ii in 1:10){#length(testdata)){
 	
 
 	t1<-testdata[[ii]]
@@ -125,21 +191,7 @@ for(ii in 1:length(testdata)){
 
 	classnames=c("Sheep","Goat","Cattle")
 
-	plotclass_v2(fn,onepdf=T,refdata,t1l,0,uselag=TRUE,LB,UB,lbl,ubl,classnames)
-
-
-	#plotclass_v2bits(fn,onepdf=T,refdata,t1l,0,uselag=TRUE,LB,UB,lbl,ubl,classnames)
-
-
-
-
-	#fn = sprintf("pdf/%s_vs_cowD8.pdf",t1l[[1]]@metaData$name)
-	#message(sprintf("testing for cow, using D8, output in %s",fn))
-	#plotcomp(fn,cowD8,t1l,50,uselag=TRUE,cowLB,cowUB)
-
-	#fn = sprintf("pdf/%s_vs_cowD7.pdf",t1l[[1]]@metaData$name)
-	#message(sprintf("testing for cow, using D8, output in %s",fn))
-	#plotcomp(fn,cowD7,t1l,50,uselag=TRUE,cowLB,cowUB)
+	plot_zooms_v1(fn,onepdf=T,refdata,t1l,0,uselag=TRUE,LB,UB,lbl,ubl,classnames)
 
 }
 dev.off()

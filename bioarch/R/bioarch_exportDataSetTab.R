@@ -1,6 +1,7 @@
 
 #' Export Bruker data to files, with lot Number as part of the filename
 #' this function will create files either with the file extension .txt, or using the fullname in the Bruker format.
+#' NB: make sure you have created a subdirectory called 'csv' from your working directory!	
 #'
 #' @param path the path to the Bruker data set
 #' @keywords Bruker 

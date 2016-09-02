@@ -1,0 +1,53 @@
+
+
+
+Theres a file called mammalian collagen sequence. Use this to find the species sequence. 
+
+look up the sequence - check the probability of hydroxylation - and look also at deamidation. 
+
+This means we can make all 
+
+
+Sugar residues - top two rows give the probablilty that a sugar is attacked to a K..
+
+
+Christine will convert DNA to protein sequences and then look that up. - Christine will have the MALDI MS and the DNA sequece - look for where things are -- cheap way of mapping hydroxylation. We can't do the hydroxylationproperly sometimes you get a big lump. 
+
+
+Mamalian collagen seq
+
+
+There'll be a mammal, fish and bird sequence. - the are equevalent FASTA files for this, but they are harder to annotate. 
+
+
+We want something to scale
+
+
+Wantst to run through every 'cut' in the seqence - apart from column ANU. everything to the right should be present in 1/2 quantities - we'd like to say what a 'bad' spectrum is. There'll be a number of masses that are identical, even though they are from completely different sequences..
+
+SO- the first thing to do is generate a *completely* theoretical sequence - see what that looks like
+
+Humans can't make vitamin C - so there should be  difference between humans and sheepcowgoat, because they can - so they are less likely to be hydroxylated. 
+
+
+#STAGES OF ANALYSIS - PLAN1
+
+##Generate the theroretical masses
+
+- Use googlesheets to access the data
+- Find the row corresponding to the species
+- Generate the sequence fragments by split at K
+- For each subsequence
+	- Record the sequence
+    - then check for Xs (unknowns) 
+    - if there's not too many Xs, check for prob of hydroxylation and deamidation
+- Plot the theoretical masses that work. Adjust the relative masses
+
+##Compare with sample data
+
+
+MC back end sep/stat oct, 
+MC then back 26 Oct
+
+
+

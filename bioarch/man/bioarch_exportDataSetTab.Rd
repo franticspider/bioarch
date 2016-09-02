@@ -3,7 +3,8 @@
 \name{bioarch_exportDataSetTab}
 \alias{bioarch_exportDataSetTab}
 \title{Export Bruker data to files, with lot Number as part of the filename
-this function will create files either with the file extension .txt, or using the fullname in the Bruker format.}
+this function will create files either with the file extension .txt, or using the fullname in the Bruker format.
+NB: make sure you have created a subdirectory called 'csv' from your working directory!}
 \usage{
 bioarch_exportDataSetTab(data, txt = TRUE)
 }
@@ -13,6 +14,7 @@ bioarch_exportDataSetTab(data, txt = TRUE)
 \description{
 Export Bruker data to files, with lot Number as part of the filename
 this function will create files either with the file extension .txt, or using the fullname in the Bruker format.
+NB: make sure you have created a subdirectory called 'csv' from your working directory!
 }
 \examples{
 1: to export directly from a Bruker directory:

@@ -3,6 +3,7 @@
 export(ba_checkyn)
 export(ba_indexFromPlatePos)
 export(ba_loadBruker)
+export(ba_plotseqpeaks)
 export(ba_ynq)
 export(bioarch_ExportLotData)
 export(bioarch_exportDataSetTab)
