@@ -1,7 +1,8 @@
 library("q2e")
 library("bioarch")
 
-source("plotseqpeaks.R")
+#need to have the following loaded before loading this: ~/git/bioarch/tests/plotseqpeaks.R
+#source("plotseqpeaks.R")
 
 #Specify the `margins' of the sample 
 moff = 1
