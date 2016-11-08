@@ -16,7 +16,7 @@ ba_plotseqpeaks <- function(data,myxlim){
 	x <- data$mass
 	y <- data$prob
 	
-	plot(x, y, xlim = myxlim)# ylim=c(0, max(y)), t="n", axes=FALSE, ann=FALSE)
+	plot(x, y, xlim = myxlim, ylim = c(0,1))# ylim=c(0, max(y)), t="n", axes=FALSE, ann=FALSE)
 	#axis(1)
 	#axis(2, at=pretty(c(0, max(y))))
 	#mtext("# Mutations", side=2, line=2.5)

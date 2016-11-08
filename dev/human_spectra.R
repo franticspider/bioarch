@@ -160,12 +160,124 @@ gths <- function(sheet, spp, d1, d2, d3, d4, d5, i1, i2, i3, i4, i5){
 }
 
 
+new_align_df <-function(){
+
+	align_df <- data.frame(
+		sequence <- character(),
+		position <- integer(),
+		length <- integer(),
+		fragno <- integer(),
+		plotno <- integer(),
+		
+		cor <- double(),
+		lag <- double(),
+		pm1 <- double(),
+		
+		energy<-double(),
+		efrac <- double()
+		)
+	return(align_df)
+}
+
+append_align_df <- function(
+						alobj, 	#the align object
+		
+						sequence,
+						position,
+						length,
+						fragno,
+						plotno,
+		
+						cor,
+						lag,
+						pm1,
+		
+						energy,
+						efrac
+						){
+		
+		
+	newrow <- c(
+	sequence,
+	position,
+	length,
+	fragno,
+	plotno,
+	
+	cor,
+	lag,
+	pm1,
+	
+	energy,
+	efrac
+	)
+	
+	alobj <- rbind(alobj,newrow)
+	
+	return(alobj)
+
+}
+
+
+
+
+
+
+
+#OBSOLETE - I'm creating a dataframe now with these header names
+write_header <- function(fn,sep=','){
+
+	header = t(c(
+		#metadata:
+		"sequence",
+		"position",
+		"length",
+		"fragno",
+		"plotno",
+		
+		#alignment
+		"cor",
+		"lag",
+		"pm1",#peak mass one - the mass of the first peak (regardless of size)
+		
+		#sum of intensities
+		"energy",
+		#fraction of intensities over total
+		"efrac"
+	))
+	write.table(header,file = fn, sep = sep, row.names = F, col.names = F)
+}
+
+#
+write_alignrow <- function(fn,sep=',',sequence,position,length,fragno,plotno,cor,lag,pm1,energy,efrac){
+	ar = c(
+		#metadata:
+		sequence,
+		position,
+		length,
+		fragno,
+		plotno,
+		
+		#alignment
+		cor,
+		lag,
+		pm1,#peak mass one - the mass of the first peak (regardless of size)
+		
+		#sum of intensities
+		energy,
+		#fraction of intensities over total
+		efrac
+	)
+}	
+
+
+
 
 
 
 
 #ranked_alignment_of_mass_spectrum
-rams <- function(sheet, spp, ms1, ms2, ms3){
+rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 
 	aa <- list()
 
@@ -190,7 +302,24 @@ rams <- function(sheet, spp, ms1, ms2, ms3){
 	moff = 1.5
 	
 	plotno=0;
+	
+	#TODO: Use this variable to check whether the expression rate is single or double
+	#There's a marker in the mammalian collagen file.
+	times_expressed = 1;
+	
+	#TODO: figure out the best way to look this up in the Mammalin Collagen Sequences sheet
+	ANU = 1061 
 	 
+	 
+	outfn1 = ("analysis1.dat")
+	outfn2 = ("analysis2.dat")
+	outfn3 = ("analysis3.dat")
+	
+	#write_header(outfn1)
+	##ad1 <- NA #new_align_df()
+	#ad2 <- new_align_df()
+	#ad3 <- new_align_df()
+	 	 
  	message(sprintf("%d:\t",count),appendLF=F)
 	for(j in start:endcol){
 		#TODO: reject non a-a entries
@@ -216,7 +345,7 @@ rams <- function(sheet, spp, ms1, ms2, ms3){
 
 			###########################################################
 			#RESTRICTION: Only do this for the range we have data for #
-			if(max(cd1$mass) > 800 && max(cd1$mass) < 3500){
+			if(max(cd1$mass) > 800 && min(cd1$mass) < 3500){
 			
 				message(sprintf("Sequence is %s\nThere are %d prolines in this segment",sequence,nhyd))
 				message(sprintf("There are %d glutamines  in this segment",nglut))
@@ -239,47 +368,108 @@ rams <- function(sheet, spp, ms1, ms2, ms3){
 						subms2 <- ms_subrange(ms2,lbl,ubl)
 						subms3 <- ms_subrange(ms3,lbl,ubl)
 					
-							
+						#Only bother if the energy is there	
 						if(max(subms1[,2]) > (0.1*max(ms1[,2])) ){
 							message(sprintf("Max intensity  ratio sufficient in this segment (%f > %f) ", max(subms1[,2]), 0.1*max(ms1[,2]) ))
 					
 							plotno = plotno+1
 			
-							message(sprintf("Plot number %d\nSegment at position %d of %d",
+							message(sprintf("\nPlot number %d\nSegment at position %d of %d",
 									plotno,j-4,endcol-4))
 							#0.984015 - if Q changes to E - add this much....
 			
 							myxlim = c(lbl,ubl)
 									
-							mymain <- sprintf("%s, nglut = %d, nhyd = %d",sequence,nglut,nhyd)
+							mymain <- sprintf("plot %d, seqpos %d\n%s\nnglut = %d/%d, nhyd = %d/%d",plotno,start-4,sequence,e,nglut,p,nhyd)
 							plot(1, type="n", xlab="Mass", ylab = "Probability", 
 									xlim=myxlim, ylim=c(0, 1), main=mymain)
+							
+							legend('topright',c("G7","G10","G13",'pre-align'), lty = c(1,1,1,1),
+								   col=c('red','green','blue','grey'),ncol=1,bty ="n")
 			
 							#ba_plotseqpeaks(cd1,myxlim)
 				
 							cc = cc+1;
 							x <- cd1$mass +(e*0.984015)+(p*16)
 							y <- cd1$prob
+							
+							cdshift <-cd1
+							cdshift$mass <- cd1$mass +(e*0.984015)+(p*16)
+							
+	
+							
 							segments(x0=x, y0=y, y1=0, col=8)
 							points(x, y, pch=21, col=1+e, bg=mybg+p)
 						
-						
-							message(sprintf("Calculating alignment for sequence %s, #%d/%d, nglut: %d, nhyd %d",sequence,cc,nglut*nhyd,e,p))
+							message(sprintf("Calculating alignment for sequence %s, #%d of %d, 1stMass: %0.2f nglut: %d, nhyd %d\n",
+									sequence, cc,(nglut+1)*(nhyd+1),x[1],e,p))
 							
 							#plot the peaks
 							#ms_peaklineplot <- function(sms,ms,col)
 							
 							#/Calculate the shift (if any) */
+						
+							
+							ms_peaklineplot(subms1,ms1,"grey")
+							ms_peaklineplot(subms2,ms2,"grey")
+							ms_peaklineplot(subms3,ms3,"grey")
+						
+						
+							#readline(" Press <return> to do the alignment")
+						
+							#align1 <- ba_ms_align(cdshift,subms1,myxlim,doplot=T)
+							align1 <- ba_ms_align(cdshift,subms1,myxlim)
+							message(sprintf("red:   cor = %0.3f, lag = %0.3f",align1$cor,align1$lag))
+							
+							#sequence,position,length,fragno,plotno,cor,lag,pm1,energy,efrac
 							
 							
+							
+							subms1[,1] = subms1[,1] + align1$lag
 							ms_peaklineplot(subms1,ms1,"red")
+						
+							write.table(
+								t(c(
+									#sequence,position,length,fragno,plotno,
+									sequence,start,end-start,count,plotno,
+									#cor,      lag,        
+									align1$cor,align1$lag,
+									#pm1,energy,efrac
+									x[1],sum(subms1[,2]), sum(subms1[,2]) / sum(ms1[,2])
+									)),
+								file = outfn1,append=T,sep = ",", row.names = F, col.names = F)
+						
+						
+						#TODO: sort out the dataframe structure for this
+						#	#ad1 <- append_align_df(ad1,
+						#	#ad1 <- rbind(ad1,c(
+						#		#sequence,position,length,fragno,plotno,
+						#		sequence,start,end-start,count,plotno,
+						#		#cor,      lag,        
+						#		align1$cor,align1$lag,
+						#		#pm1,energy,efrac
+						#		x[1],sum(subms1[,1]), sum(subms1[,1]) / sum(ms1[,1])
+						#		)
+						#		)
+							
+							
+							align2 <- ba_ms_align(cdshift,subms2,myxlim)
+							message(sprintf("green: cor = %0.3f, lag = %0.3f",align2$cor,align2$lag))
+							subms2[,1] = subms2[,1] + align2$lag
 							ms_peaklineplot(subms2,ms2,"green")
+							
+							
+							align3 <- ba_ms_align(cdshift,subms3,myxlim)
+							message(sprintf("blue:  cor = %0.3f, lag = %0.3f",align3$cor,align3$lag))
+							subms3[,1] = subms3[,1] + align3$lag
 							ms_peaklineplot(subms3,ms3,"blue")
-						
-						
-						
-						
-							readline("hit <return> to look at the next segment\n\n")
+							
+							
+							
+							
+							if(dopause){		
+								readline("hit <return> to look at the next segment\n\n")
+							}
 						}
 						else{
 							message(sprintf("Max intensity  ratio too small in this segment (%f/%f)", max(subms1[,2]), max(ms1[,2]) ))
@@ -312,51 +502,41 @@ rams <- function(sheet, spp, ms1, ms2, ms3){
  			message(sprintf("%s",sheet[spidx,j]),appendLF=F)
  		}	 	
 	 }
+	 
+	 #return(ad1)
 }
 
 
+#NB: you need to have run theoretical_spectra.R before calling this, which makes the item 'sheets'
+#This makes the pdf 'keri2.pdf' that was sent in email to matthew and keri, 1 Nov 2016 
+keri2pdf <- function(sheet){
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_A1.txt"
+	e1 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_D4.txt"
+	e2 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
+	e3 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_A1.txt"
+	e4 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_D4.txt"
+	e5 <- read.table(fn)
+
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_C1.txt"
+	i1 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_F4.txt"
+	i2 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_I7.txt"
+	i3 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_C1.txt"
+	i4 <- read.table(fn)
+	fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_F4.txt"
+	i5 <- read.table(fn)
 
 
 
 
+	par(mar=c(0.9,2.3,0.9,.3), mfrow = c(1,1), oma=c(5,0,2,0))
 
-
-
-
-
-
-
-
-
-#NB: you need to have run theoretical_spectra.R before calling this!
-
-
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_A1.txt"
-e1 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_D4.txt"
-e2 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
-e3 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_A1.txt"
-e4 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_D4.txt"
-e5 <- read.table(fn)
-
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_C1.txt"
-i1 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_F4.txt"
-i2 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_I7.txt"
-i3 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_C1.txt"
-i4 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_F4.txt"
-i5 <- read.table(fn)
-
-
-par(mar=c(0.9,2.3,0.9,.3), mfrow = c(1,1), oma=c(5,0,2,0))
-
-#This makes the pdf that was used in the meeting on 161101. 
 	pdf(file="keri2.pdf",w=8,h=12)
 	#generate_theroretical_spectrum_and_ms
 	par(mar=c(0.9,2.3,2.9,.3), mfrow = c(6,1), oma=c(5,0,2,0))
@@ -382,26 +562,98 @@ par(mar=c(0.9,2.3,0.9,.3), mfrow = c(1,1), oma=c(5,0,2,0))
 	lines(i4[,1],i4[,2],col=col1)
 	plot(e5[,1],e5[,2],type="l", xlim=c(800, 3500), main = "Method N",col=col2)
 	lines(i5[,1],i5[,2],col=col1)
-
-
-
-
 	#readline("hit <return> to generate fragment spectra")
 	
 
 	#generate_theroretical_spectrum_and_ms
 	#gths(sheet,"human",e1,e2,e3,e4,e5,i1,i2,i3,i4,i5)
 	dev.off()
+}
+keri2pdf(sheet)
 
+
+
+fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
+e1 <- read.table(fn)
+fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G10.txt"
+e2 <- read.table(fn)
+fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G13.txt"
+e3 <- read.table(fn)
+
+#
+system("rm analysis1.dat")
 
 #ranked_alignment_of_mass_spectrum
-#al <- rams(sheet,"human",e1,e2,e3)
+
+#par(mar=c(0.9,2.3,2.9,.3), mfrow = c(6,1), oma=c(5,0,2,0))
+par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+pdf(file = "C1.pdf",w=6,h=4)
+	al <- rams(sheet,"human",e1,e2,e3,dopause=F)
+dev.off()
+
+readline("analysis done. Hit <return> to see results")
+
+#load the data from the analysis just done:
+x<-read.table("analysis1.dat",sep=",")
+colnames(x) <- c("sequence","position","length","fragno","plotno","cor","lag","pm1","energy","efrac")
+x$plotno <- as.numeric(x$plotno)
+
+#here's the list of plots we think are 'true'¬
+#originally
+#gt<-c(3,5,8,9,10,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
+#removing any 'suspect' plots:
+gt<-c(3,5,8,910,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
+
+t <- x[x$plotno %in% gt,]
+f <- x[!(x$plotno %in% gt),]
+
+myyint = 1
+
+pdf(file = "C1lagvcor.pdf",w=8,h=6)
+par(mar=c(4,3.8,3,1), mfrow = c(1,1), oma=c(1,1,1,1))
+plot(f$lag,f$cor,col="red",pch=19,main="Lag vs Correlation\nC1 sample 1 (G7)",xlab="Lag (Da)",ylab="Correlation")
+legend(x=0.25,y=0.2,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+points(t$lag,t$cor,col="green",pch=19)
+dev.off()
+
+readline("hit <return> for next plot (mass v lag)")
+
+pdf(file = "C1massvlag.pdf",w=8,h=6)
+plot(x=f$pm1,y=f$lag,col="red",pch=19,
+ xlab="Mass of first peak (Da)",
+ ylab="Lag (Da)",
+ main="Lag vs Correlation\nC1 sample 1 (G7)")
+ 
+legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+points(x=t$pm1,y=t$lag,col="green",pch=19)
+dev.off()
+
+
+
+readline("hit <return> to look at same for sheep")
+
+par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+pdf(file = "C1sheep.pdf",w=6,h=4)
+	alsheep <- rams(sheet,"sheep",e1,e2,e3,dopause=T)
+dev.off()
+
 
 #1: get the TS
 #2: for each fragment:
 #	figure out nglut and nhyd
 #	do an alignment
 #	get a score
+
+##########################################################
+
+
+
+
+
+
+
+
+
 
 
 
