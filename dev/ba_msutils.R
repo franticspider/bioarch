@@ -2,6 +2,66 @@
 #Globals
 
 
+#
+generatefilenames <- function(directory,sampleindexes){
+
+	append = F
+	
+	if(exists("filenames"))
+		rm(filenames)
+	
+	for(i in 1:length(sampleindexes)){
+	
+		name <- sprintf("%s%s.txt",directory,sampleindexes[i])
+	
+		if(!file.exists(name)){
+			message(sprintf("File %s does not exist",name))
+			return (F)
+		}
+			
+		if(exists("filenames"))
+			filenames<- c(filenames,name)
+		else
+			filenames<-name	
+	}
+
+	return (filenames)
+}
+
+
+
+#
+validmaldidata <- function(filenames){
+
+	if(exists("maldidata"))
+		rm(maldidata)
+		
+
+	for(i in 1:length(filenames)){
+		goodread = T
+		e1 <- read.table(filenames[i])
+		
+		#It must be a data frame
+		if(!is.data.frame(e1))
+			goodread = F
+		
+		#It must have two columns
+		if(ncol(e1) != 2)
+			goodread = F
+		
+		if(!goodread){
+			message(sprintf("Data in file %s is not in maldi format",filenames[i]))
+			return (F)
+		}
+	}
+
+	return (maldidata)
+}
+
+
+
+
+
 
 #convert a character to an index value for googlesheets 
 ba_chartoint<-function(cc,subA=T){
@@ -199,6 +259,11 @@ ms_peaklineplot <- function(sms,ms,mycol){
 }
 
 
+ms_offset_peaklineplot <- function(ms,offset,mycol){
+	lines(x=(ms[,1]+offset),ms[,2]/max(ms[,2]),col=mycol)
+}
+
+
 
 
 ts_index <- function(sheet,spp){
@@ -225,4 +290,258 @@ ts_index <- function(sheet,spp){
 	 return (spidx)
 
 }
+
+
+
+###########################################################################################
+# The Next function, 161109, Generates the data for three replicates. Plan is to do this for 
+# All five of the norfolk samples, and analyse BY HAND - see where we get and what we need
+# So we build a function that helps the manual analysis first - see where that takes us...
+
+
+seqvmaldi <- function(){
+
+
+	#TODO: generate the ouput file names!
+
+	#TODO: really, we want to open the file and close it - the following is a bit crude
+	system("rm analysis1.dat")
+
+	#ranked_alignment_of_mass_spectrum
+
+	#par(mar=c(0.9,2.3,2.9,.3), mfrow = c(6,1), oma=c(5,0,2,0))
+	par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+	pdf(file = "C1.pdf",w=6,h=4)
+		al <- rams(sheet,"human",e1,e2,e3,dopause=F)
+	dev.off()
+
+	readline("analysis done. Hit <return> to see results")
+
+	#load the data from the analysis just done:
+	x<-read.table("analysis1.dat",sep=",")
+	colnames(x) <- c("sequence","position","length","fragno","plotno","cor","lag","pm1","pm5","energy","efrac")
+	x$plotno <- as.numeric(x$plotno)
+
+	#here's the list of plots we think are 'true'¬
+	#originally
+	#gt<-c(3,5,8,9,10,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
+	#removing any 'suspect' plots:
+	gt<-c(3,5,8,9,10,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
+
+	t <- x[x$plotno %in% gt,]
+	f <- x[!(x$plotno %in% gt),]
+
+	myyint = 1
+
+	pdf(file = "C1lagvcor.pdf",w=8,h=6)
+	par(mar=c(4,3.8,3,1), mfrow = c(1,1), oma=c(1,1,1,1))
+	plot(f$lag,f$cor,col="red",pch=19,main="Lag vs Correlation\nC1 sample 1 (G7)",xlab="Lag (Da)",ylab="Correlation")
+	legend(x=0.25,y=0.2,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+	points(t$lag,t$cor,col="green",pch=19)
+	dev.off()
+
+	readline("hit <return> for next plot (mass v lag)")
+
+	pdf(file = "C1massvlag.pdf",w=8,h=6)
+	plot(x=f$pm1,y=f$lag,col="red",pch=19,
+	 xlab="Mass of first peak (Da)",
+	 ylab="Lag (Da)",
+	 main="Lag vs Correlation\nC1 sample 1 (G7)")
+	 
+	legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+	points(x=t$pm1,y=t$lag,col="green",pch=19)
+	dev.off()
+
+
+
+	readline("hit <return> to look at same for sheep")
+
+	par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+	pdf(file = "C1sheep.pdf",w=6,h=4)
+		alsheep <- rams(sheet,"sheep",e1,e2,e3,dopause=T)
+	dev.off()
+
+
+	#1: get the TS
+	#2: for each fragment:
+	#	figure out nglut and nhyd
+	#	do an alignment
+	#	get a score
+
+	##########################################################
+}
+
+
+load.analysis <- function(fn,gt,tf=T){
+	x<-read.table(fn,sep=",")
+	colnames(x) <- c("sequence","position","length","fragno",
+	                 "plotno","ndeam","nhyd","cor","lag","pm1","pm5","energy","efrac")
+	x$plotno <- as.numeric(x$plotno)
+
+	if(tf){
+		d <- x[x$plotno %in% gt,]
+	}
+	else{
+		d <- x[!(x$plotno %in% gt),]
+	}
+	
+	return (d)
+}
+
+
+
+# scode = the sample code (e.g. C1)
+# gt = ground truth - list of plots that are good matches
+gtanalysis <- function(scode,gt){
+
+	fn <- sprintf("%sanalysis.dat",scode)
+	message(sprintf("Opening %s",fn))
+
+
+	#load the data from the analysis just done:
+	x<-read.table(fn,sep=",")
+	colnames(x) <- c("sequence","position","length","fragno",
+	                 "plotno","ndeam","nhyd","cor","lag","pm1","pm5","energy","efrac")
+	x$plotno <- as.numeric(x$plotno)
+
+	t <- x[x$plotno %in% gt,]
+	f <- x[!(x$plotno %in% gt),]
+
+
+	mytlabs <- sprintf("%s/%s/%s",t$position,t$ndeam,t$nhyd)
+	myflabs <- sprintf("%s/%s/%s",f$position,f$ndeam,f$nhyd)
+
+
+	myyint = 1
+	
+	message("Created t and f from gt")
+
+	fn <- sprintf("%slagvcor.pdf",scode)
+	#str(f)
+	message(sprintf("lag: %d",length(f$lag) ))
+	message(sprintf("cor: %d",length(f$cor) ))
+	
+	
+	
+	pdf(file = fn ,w=8,h=6)
+	par(mar=c(4,3.8,3,1), mfrow = c(1,1), oma=c(1,1,1,1))
+	plot(f$lag,f$cor,col="red",pch=19,main=sprintf("Lag vs Correlation\n%s sample 1",
+											scode),xlab="Lag (Da)",ylab="Correlation")
+	legend(x=0.25,y=0.2,c("good match","poor match"),pch = c(19,19), 
+			col = c("green","red"),y.intersp=myyint)
+			
+	text(x=f$lag,y=f$cor,labels=myflabs, cex=0.25, pos = 3, srt = 0, col = "grey")
+	points(t$lag,t$cor,col="green",pch=19)
+	text(x=t$lag,y=t$cor,labels=mytlabs, cex=0.25, pos = 3, srt = 0)
+	dev.off()
+
+#####readline("hit <return> for next plot (mass v lag)")
+
+	#create a polynomial
+	set.seed(20)
+	message("Making model")
+	ts <- t[ order(t$pm1), ]
+	model <- lm(ts$lag ~ poly(ts$pm1,3))
+	pi <- predict(model,data.frame(x=ts$pm1,interval='confidence',level=0.99))
+#> plot(ts$pm1,ts$lag,col="red",pch=19)
+#> lines(ts$pm1,pi)
+
+	
+
+	message("massvlag")
+
+	fn <- sprintf("%smassvlag.pdf",scode)
+	pdf(file = fn,w=8,h=6)
+	plot(x=f$pm1,y=f$lag,col="red",pch=19,
+	 xlab="Mass of first peak (Da)",
+	 ylab="Lag (Da)",
+	 main=sprintf("Mass vs Lag\n%s sample 1",scode)
+	 ) 
+	text(x=f$pm1,y=f$lag,labels=myflabs, cex=0.25, pos = 3, srt = 0, col = "grey")
+	
+	legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+	
+	points(x=t$pm1,y=t$lag,col="green",pch=19)
+	#Let's hav text for the 'true' points
+	text(x=t$pm1,y=t$lag,labels=mytlabs, cex=0.25, pos = 3, srt = 0)
+	lines(ts$pm1,pi,col='orange')
+	dev.off()
+
+
+
+
+
+	fn <- sprintf("%smassvlag_zoom.pdf",scode)
+	pdf(file = fn,w=8,h=6)
+	plot(x=f$pm1,y=f$lag,col="red",pch=19,
+	 xlab="Mass of first peak (Da)",
+	 ylab="Lag (Da)",
+	 #this is the only extra line on the zoom plot!
+	 ylim=c(-0.25,0.1),
+	 main=sprintf("Mass vs Lag\n%s sample 1",scode)
+	 ) 
+	points(x=t$pm1,y=t$lag,col="green",pch=19)
+	lines(ts$pm1,pi,col='orange')
+	text(x=f$pm1,y=f$lag,labels=myflabs, cex=0.25, pos = 3, srt = 0, col = "grey")
+	
+	legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+	
+	#Let's hav text for the 'true' points
+	text(x=t$pm1,y=t$lag,labels=mytlabs, cex=0.25, pos = 3, srt = 45)
+	dev.off()
+
+
+
+
+
+	fn <- sprintf("%smassvlag_zoom_zoom.pdf",scode)
+	pdf(file = fn,w=8,h=6)
+	plot(x=f$pm1,y=f$lag,col="red",pch=19,
+	 xlab="Mass of first peak (Da)",
+	 ylab="Lag (Da)",
+	 #this is the only extra line on the zoom plot!
+	 ylim=c(-0.1,0.1),
+	 xlim=c(1425,1900),
+	 main=sprintf("Mass vs Lag\n%s sample 1",scode)
+	 ) 
+	
+	points(x=t$pm1,y=t$lag,col="green",pch=19)
+	lines(ts$pm1,pi,col='orange')
+	text(x=f$pm1,y=f$lag,labels=myflabs, cex=0.25, pos = 3, srt = 45, col = "grey")
+	
+	legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
+	
+	points(x=t$pm1,y=t$lag,col="green",pch=19)
+	lines(ts$pm1,pi,col='orange')
+	#Let's hav text for the 'true' points
+	text(x=t$pm1,y=t$lag,labels=mytlabs, cex=0.25, pos = 3, srt = 45)
+	dev.off()
+
+
+
+#####readline("hit <return> to see 
+
+	fn <- sprintf("%sseqvionct.pdf",scode)
+	pdf(file = fn,w=8,h=6)
+	plot(x=t$position,y=t$energy,col="red",pch=19,
+	 xlab="Position on sequence",
+	 ylab="Ion Count",
+	 main=sprintf("Seqpos vs Ion Count\n%s sample 1",scode)
+	 )
+	text(x=t$position,y=t$energy,labels=mytlabs, cex=0.7, pos = 3)
+	dev.off()
+
+	#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+	#pdf(file = "C1sheep.pdf",w=6,h=4)
+	#	alsheep <- rams(sheet,"sheep",e1,e2,e3,dopause=T)
+	#dev.off()
+
+
+
+}
+
+
+
+
+
 

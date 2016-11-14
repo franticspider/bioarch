@@ -1,4 +1,13 @@
 
+
+
+library("googlesheets")
+library("bioarch")
+library("q2e")
+
+#we need this to search for letters (P) etc. 
+require("stringr")
+
 source("~/git/bioarch/dev/ba_msutils.R")
 
 
@@ -56,7 +65,7 @@ gths <- function(sheet, spp, d1, d2, d3, d4, d5, i1, i2, i3, i4, i5){
 	 }
 
 	 ###################################################
-	 readline(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
+	 message(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
 	 	
 	 endcol<-ncol(sheet)	
 	 	
@@ -277,7 +286,7 @@ write_alignrow <- function(fn,sep=',',sequence,position,length,fragno,plotno,cor
 
 
 #ranked_alignment_of_mass_spectrum
-rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
+rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F, scode){
 
 	aa <- list()
 
@@ -291,7 +300,7 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 	}
 
 	###################################################
-	readline(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
+	message(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
 
 	endcol<-ncol(sheet)	
 
@@ -311,9 +320,13 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 	ANU = 1061 
 	 
 	 
-	outfn1 = ("analysis1.dat")
-	outfn2 = ("analysis2.dat")
-	outfn3 = ("analysis3.dat")
+	#outfn1 = ("analysis1.dat")
+	#outfn2 = ("analysis2.dat")
+	#outfn3 = ("analysis3.dat")
+	
+	
+	outfn1 <- sprintf("%sanalysis.dat",scode[1])
+	
 	
 	#write_header(outfn1)
 	##ad1 <- NA #new_align_df()
@@ -337,7 +350,7 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 
 			nhyd <- str_count(sequence,"P")
 
-			nglut <- str_count(sequence,"Q")
+			nglut <- str_count(sequence,"Q") + str_count(sequence,"N")
 
 			message(sprintf("Generating spectrum for sequence %s ...",sequence,appendLF=F))
 
@@ -369,7 +382,8 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 						subms3 <- ms_subrange(ms3,lbl,ubl)
 					
 						#Only bother if the energy is there	
-						if(max(subms1[,2]) > (0.1*max(ms1[,2])) ){
+						#if(max(subms1[,2]) > (0.1*max(ms1[,2])) ){
+						if(max(subms1[,2]) > (0.05*max(ms1[,2])) ){
 							message(sprintf("Max intensity  ratio sufficient in this segment (%f > %f) ", max(subms1[,2]), 0.1*max(ms1[,2]) ))
 					
 							plotno = plotno+1
@@ -379,12 +393,12 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 							#0.984015 - if Q changes to E - add this much....
 			
 							myxlim = c(lbl,ubl)
-									
+							#TODO: start-4 is used a few times - so it needs setting as a variable		
 							mymain <- sprintf("plot %d, seqpos %d\n%s\nnglut = %d/%d, nhyd = %d/%d",plotno,start-4,sequence,e,nglut,p,nhyd)
 							plot(1, type="n", xlab="Mass", ylab = "Probability", 
 									xlim=myxlim, ylim=c(0, 1), main=mymain)
 							
-							legend('topright',c("G7","G10","G13",'pre-align'), lty = c(1,1,1,1),
+							legend('topright',c(scode[2],scode[3],scode[4],'pre-align'), lty = c(1,1,1,1),
 								   col=c('red','green','blue','grey'),ncol=1,bty ="n")
 			
 							#ba_plotseqpeaks(cd1,myxlim)
@@ -395,8 +409,6 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 							
 							cdshift <-cd1
 							cdshift$mass <- cd1$mass +(e*0.984015)+(p*16)
-							
-	
 							
 							segments(x0=x, y0=y, y1=0, col=8)
 							points(x, y, pch=21, col=1+e, bg=mybg+p)
@@ -410,59 +422,47 @@ rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F){
 							#/Calculate the shift (if any) */
 						
 							
-							ms_peaklineplot(subms1,ms1,"grey")
-							ms_peaklineplot(subms2,ms2,"grey")
-							ms_peaklineplot(subms3,ms3,"grey")
-						
-						
+							
+							ms_offset_peaklineplot(ms1,0,"grey")
+							ms_offset_peaklineplot(ms2,0,"grey")
+							ms_offset_peaklineplot(ms3,0,"grey")
+							
+										
 							#readline(" Press <return> to do the alignment")
 						
 							#align1 <- ba_ms_align(cdshift,subms1,myxlim,doplot=T)
 							align1 <- ba_ms_align(cdshift,subms1,myxlim)
 							message(sprintf("red:   cor = %0.3f, lag = %0.3f",align1$cor,align1$lag))
-							
 							#sequence,position,length,fragno,plotno,cor,lag,pm1,energy,efrac
 							
-							
-							
 							subms1[,1] = subms1[,1] + align1$lag
-							ms_peaklineplot(subms1,ms1,"red")
+							#ms_peaklineplot(subms1,ms1,"red")
+							ms_offset_peaklineplot(ms1,align1$lag,"red")
 						
 							write.table(
 								t(c(
 									#sequence,position,length,fragno,plotno,
-									sequence,start,end-start,count,plotno,
+									sequence,start-4,end-start,count,plotno,
+									#ndean,nhyd
+									e,p,
 									#cor,      lag,        
 									align1$cor,align1$lag,
-									#pm1,energy,efrac
-									x[1],sum(subms1[,2]), sum(subms1[,2]) / sum(ms1[,2])
+									#pm1,pm5,energy,efrac
+									x[1],x[5],sum(subms1[,2]), sum(subms1[,2]) / sum(ms1[,2])
 									)),
 								file = outfn1,append=T,sep = ",", row.names = F, col.names = F)
 						
-						
-						#TODO: sort out the dataframe structure for this
-						#	#ad1 <- append_align_df(ad1,
-						#	#ad1 <- rbind(ad1,c(
-						#		#sequence,position,length,fragno,plotno,
-						#		sequence,start,end-start,count,plotno,
-						#		#cor,      lag,        
-						#		align1$cor,align1$lag,
-						#		#pm1,energy,efrac
-						#		x[1],sum(subms1[,1]), sum(subms1[,1]) / sum(ms1[,1])
-						#		)
-						#		)
-							
 							
 							align2 <- ba_ms_align(cdshift,subms2,myxlim)
 							message(sprintf("green: cor = %0.3f, lag = %0.3f",align2$cor,align2$lag))
 							subms2[,1] = subms2[,1] + align2$lag
-							ms_peaklineplot(subms2,ms2,"green")
+							ms_offset_peaklineplot(ms2,align2$lag,"green")
 							
 							
 							align3 <- ba_ms_align(cdshift,subms3,myxlim)
 							message(sprintf("blue:  cor = %0.3f, lag = %0.3f",align3$cor,align3$lag))
 							subms3[,1] = subms3[,1] + align3$lag
-							ms_peaklineplot(subms3,ms3,"blue")
+							ms_offset_peaklineplot(ms3,align3$lag,"blue")
 							
 							
 							
@@ -569,94 +569,188 @@ keri2pdf <- function(sheet){
 	#gths(sheet,"human",e1,e2,e3,e4,e5,i1,i2,i3,i4,i5)
 	dev.off()
 }
-keri2pdf(sheet)
+#keri2pdf(sheet)
 
 
 
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
-e1 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G10.txt"
-e2 <- read.table(fn)
-fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G13.txt"
-e3 <- read.table(fn)
+######################################################
 
+
+#copied from theoretical_spectra.R... 
+#Fetch the sheet if it isn't available...
+if(!exists("sheet")){
+
+	message("Fetching the sheet of mammalian collagen sequences")
+	mcs <- gs_title("Mammalian Collagen Sequences v0.0.1")
+	print(mcs)
+
+	sheet <- gs_read(mcs)
+}
+
+
+
+#	REVERSE PLATEMAP FOR KERI'S DATA
+#   |-----ENGLAND-----|------ITALY-------------|------------PORTUGAL--------------|	
+#	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20
+#-------------------------------FOLDER ONE: 20160803------------------------------|
+#			
+#B	A1	A2	A3  B1	B3	C1	C2	C3	A10	A11	A12	B10	B12	C10 C11	C12	A19	A20	A21	B19		
+#	A4	A5	A6	B4	B6	C4	C5	C6	A13	A14	A15	B13	B15	C13	C14	C15	A22	A23	A24	B22	
+#	A7	A8	A9	B7	B9	C7	C8	C9	A16	A17	A18	B16	B18	C16	C17	C18	D1	D2	D3	E20	
+#																						
+#N	D4	D5	D6	E4	E5	F4	F5	F6	D13 D14 D15	E13	E15	F13	F14	F15	D22	D23 D24	E22					
+#	D7	D8	D9	E7	E9	F7	F8	F9	D16	D17 D18	E16	E18	F16	F17	F18	G1	G2	G3	H1			
+#	D10	D11	D12	E10	E12	F10	F11	F12	D19	D20	D21	E19	E21	F19	F20	F21	G4	G5	G6	H2		
+#																						
+#-------------------------------FOLDER TWO: 20160909------------------------------|
+#	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20
+#	
+#K 	A1	A2	A3	B1	B3	C1	C2	C3	A10	A11	A12	B10	B12	C10	C11	C12	A19	A20	A21 B19
+#	A4	A5	A6	B4	B6	C4	C5	C6	A13	A14	A15	B13	B15	C13	C14	C15	A22	A23	A24	B22
+#	A7	A8	A9	B7	B9	C7	C8	C9	A16	A17	A18	B16	B18	C16	C17	C18	D1	D2	D3	E1	
 #
-system("rm analysis1.dat")
+#I	D4	D5	D6	E4	E6	F4	F5	F6	D13	D14	D15	E13	E15	F13	F14	F15	D22	D23	D24	E22	
+#	D7	D8	D9	E7	E9	F7	F8	F9	D16	D17	D18	E16	E18	F16	F17	F18 G1	G2	G3	H1		
+#	D10	D11	D12	E10	E12	F10	F11	F12	D19	D20	D21	E19	E21	F19	F20	F21	G4	G5	G6	H4	
+#
+#C	G7	G8	G9	H7	H9	I7	I8	I9	G16	G17	G18	H16	H18	I16	I17	I18	J1	J2	J3	K1
+#	G10	G11	G12	H10	H12	I10	I11	I12	G19	G20	G21	H19	H21	I19 I20 I21	J4	J5	J6	K4				
+#	G13	G14	G15	H13	H15	I13	I14	I15	G22	G23	G24	H22	H24	I22	I23	I24	J7	J8	J9	K7				
 
-#ranked_alignment_of_mass_spectrum
 
-#par(mar=c(0.9,2.3,2.9,.3), mfrow = c(6,1), oma=c(5,0,2,0))
-par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
-pdf(file = "C1.pdf",w=6,h=4)
-	al <- rams(sheet,"human",e1,e2,e3,dopause=F)
-dev.off()
+generate_alignment_pdf <- function(froot,scode,spots){
 
-readline("analysis done. Hit <return> to see results")
+	anfn <- sprintf("%sanalysis.dat",scode)
+	#Delete the analyisis file
+	if(file.exists(anfn))
+		file.remove(anfn)
+	
+	e1 <- read.table(sprintf("%s%s.txt",froot,spots[1]))
+	e2 <- read.table(sprintf("%s%s.txt",froot,spots[2]))
+	e3 <- read.table(sprintf("%s%s.txt",froot,spots[3]))
+	
+	par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+	pdf(file = sprintf("%s.pdf",scode),w=6,h=4)
+		al <- rams(sheet,"human",e1,e2,e3,dopause=F,c(scode,spots))
+	dev.off()
+}
 
-#load the data from the analysis just done:
-x<-read.table("analysis1.dat",sep=",")
-colnames(x) <- c("sequence","position","length","fragno","plotno","cor","lag","pm1","energy","efrac")
-x$plotno <- as.numeric(x$plotno)
 
-#here's the list of plots we think are 'true'¬
-#originally
+
+#TODO: We can't automate yet because we haven't got ground truth - instead we must generate analyses
+
+##TODO: really, we want to open the file and close it - the following is a bit crude
+#system("rm C1analysis.dat")
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
+#e1 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G10.txt"
+#e2 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G13.txt"
+#e3 <- read.table(fn)
+#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+#pdf(file = "C1.pdf",w=6,h=4)
+#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C1","G7","G10","G13"))
+#dev.off()
+
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C1",
+		c("G7","G10","G13"))
 #gt<-c(3,5,8,9,10,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
-#removing any 'suspect' plots:
-gt<-c(3,5,8,910,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
+#with the inclusion on N, and setting threshold to 0.05,  we get
+gt<- c(3,5,7,10,14,16,23,24,25,26,29,30,35,44,57,58,65,66,67,70,73,74,80,82,85,98,
+		102,105,108,112,118,119,120,122,123,127,128,139,150,152)		
+			
+message("Doing analysis now")
+gtanalysis("C1",gt)
 
-t <- x[x$plotno %in% gt,]
-f <- x[!(x$plotno %in% gt),]
-
-myyint = 1
-
-pdf(file = "C1lagvcor.pdf",w=8,h=6)
-par(mar=c(4,3.8,3,1), mfrow = c(1,1), oma=c(1,1,1,1))
-plot(f$lag,f$cor,col="red",pch=19,main="Lag vs Correlation\nC1 sample 1 (G7)",xlab="Lag (Da)",ylab="Correlation")
-legend(x=0.25,y=0.2,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
-points(t$lag,t$cor,col="green",pch=19)
-dev.off()
-
-readline("hit <return> for next plot (mass v lag)")
-
-pdf(file = "C1massvlag.pdf",w=8,h=6)
-plot(x=f$pm1,y=f$lag,col="red",pch=19,
- xlab="Mass of first peak (Da)",
- ylab="Lag (Da)",
- main="Lag vs Correlation\nC1 sample 1 (G7)")
- 
-legend(x=2500,y=0.5,c("good match","poor match"),pch = c(19,19), col = c("green","red"),y.intersp=myyint)
-points(x=t$pm1,y=t$lag,col="green",pch=19)
-dev.off()
+#readline("Did it work?")
+#
+#system("rm C2analysis.dat")
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G8.txt"
+#e1 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G11.txt"
+#e2 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G14.txt"
+#e3 <- read.table(fn)
+#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+#pdf(file = "C2.pdf",w=6,h=4)
+#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C2","G8","G11","G14"))
+#dev.off()
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C2",
+		c("G8","G11","G14"))
+gtc2 <- c(3,4,5,8,11,12,17,18,19,24,29,40,41,44,46,47,53,54,63,67,73,79,80,96,97)
+gtanalysis("C2",gtc2)
 
 
 
-readline("hit <return> to look at same for sheep")
+#system("rm C3analysis.dat")
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G9.txt"
+#e2 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G12.txt"
+#e1 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G15.txt"
+#e3 <- read.table(fn)
+#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+#pdf(file = "C3.pdf",w=6,h=4)
+#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C3","G12","G9","G15"))
+#dev.off()
 
-par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
-pdf(file = "C1sheep.pdf",w=6,h=4)
-	alsheep <- rams(sheet,"sheep",e1,e2,e3,dopause=T)
-dev.off()
-
-
-#1: get the TS
-#2: for each fragment:
-#	figure out nglut and nhyd
-#	do an alignment
-#	get a score
-
-##########################################################
-
-
-
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C3",
+		c("G12","G9","G15"))
+gtc3 <- c(3,11,13,15,20,28,29,38,39,57,58,65,70,71,88,89)
+gtanalysis("C3",gtc3)
 
 
 
+#system("rm C4analysis.dat")
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H7.txt"
+#e2 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H10.txt"
+#e1 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H13.txt"
+#e3 <- read.table(fn)
+#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+#pdf(file = "C4.pdf",w=6,h=4)
+#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C4","H7","H10","H13"))
+#dev.off()
+
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C4",
+		c("H7","H10","H13"))
+gtc4 <- c(3,4,7,13,17,18,23,30,39,42,43,45,47,48,54,55,66,67,72,78,79,82,89,97,99,101)
+gtanalysis("C4",gtc4)
 
 
 
+#system("rm C5analysis.dat")
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H9.txt"
+#e2 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H12.txt"
+#e1 <- read.table(fn)
+#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_H15.txt"
+#e3 <- read.table(fn)
+#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+#pdf(file = "C5.pdf",w=6,h=4)
+#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C5","H9","H12","H15"))
+#dev.off()
+
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C5",
+		c("H9","H12","H15"))
+gtc5 <- c(1,2,3,4,9,14,19,20,25,26,36,45,48,49,50,52,53,59,60,71,76,82,83,86,92,101,102,103,107,108,109)
+gtanalysis("C5",gtc5)
 
 
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C6",
+		c("I7","I10","I13"))
+gtc6 <-c(3,5,9,12,14,21,28,31,34,36,40,41,55,61,67,68,77,84,85,86)
+gtanalysis("C6",gtc6)
 
 
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C7",
+		c("I8","I11","I14"))
+gtc7 <- c(3,4,7,10,14,15,20,25,34,35,38,40,41,47,48,57,61,67,73,74,76,86,87,88)
+gtanalysis("C7",gtc7)
 
 
+generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C8",
+		c("I9","I12","I15"))
+gtc8 <- c(1,2,5,10,15,17,18,24,25,35,36,37,41,47,48,50,58,59,60)
+gtanalysis("C8",gtc8)
