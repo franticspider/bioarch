@@ -148,7 +148,7 @@ ba_ms_align <- function(ts,data,txlim,doplot=F){
 
 	#STEPSIZE & MAX LAG
 	myby <- 0.005 #125
-	#the lagmax parameter is expressed as the number of samples (so it's scale-free)
+	#mylagmax gives the 'reverse scaling' of the stepsize - useful when comparing etc. 
 	mylagmax <- 1/myby
 
 
@@ -183,8 +183,9 @@ ba_ms_align <- function(ts,data,txlim,doplot=F){
 		title(sprintf("Data resampled to resolution %0.2f Da",myby), line = "-2")
 	}
 
-	#Now we can do the cross-correlation: 
-	ccd <- ccf(yri$y,yii$y,ylim=c(-0.5,1.0),plot=doplot,axes=F, lag.max = mylagmax)
+	######################################################################################
+	#Now we can do the cross-correlation:                                 4*mylagmax
+	ccd <- ccf(yri$y,yii$y,ylim=c(-0.1,0.5),plot=doplot,axes=F, lag.max = mylagmax)
 		#message(sprintf("Length yr = %d, len yi = %d",length(yr),length(yi)))
 		#plot(yr,yi,type="l",ylim=c(0,max(1000,max(yi)))  )
 		
@@ -194,17 +195,54 @@ ba_ms_align <- function(ts,data,txlim,doplot=F){
 	res = data.frame(cor,lag) 
 	res_max = res[which.max(res$cor),] 
 	
+	
 	out <- data.frame(
 		cor = res_max$cor,
 		lag = res_max$lag * myby
 		)
+	
+	#let's set a limit on the permissable lag: 
+	laglim = 0.3
+	
+	lag_range = c(-laglim,laglim)
+	lagset = res[ (res$lag > -(laglim/myby)) & (res$lag < (laglim/myby)),]
+	
+	res_lrmax = lagset[which.max(lagset$cor),]
+	
+	message("\nComparing max correlation with within-range correlation:")
+	message(sprintf("  cor = %0.2f, lag = %0.2f\nlrcor = %0.2f, lrlag = %0.2f\n",out$cor,out$lag,res_lrmax$cor,res_lrmax$lag * myby))
+	
+	
+	
+	
+	
+	
+	
+	#Here's where we can do a more detailed analysis
+	message(sprintf("max cor = %0.2f at lag %0.2f",out$cor, out$lag))
+	points(x=res_max$lag,y=res_max$cor,pch=19,col="red")
+	points(x=res_lrmax$lag,y=res_lrmax$cor,pch=10,col="green",cex = 3)
+	
+	message(sprintf("There are %d points in the correlation from %0.2f to %0.2f (scaled to %0.2f to %0.2f)",nrow(res),res$lag[1],res$lag[nrow(res)],res$lag[1]*myby,res$lag[nrow(res)]*myby))
+	
+	
+	
+	
+	
+	
 
-	td <- sprintf("Cross-Correlation\n max c=%.2f, at lag=%0.3f",res_max$cor,res_max$lag*myby)
+	td <- sprintf("Cross-Correlation\n max c=%.2f, at lag=%0.3f\n max inrange c = %.2f at lag %.3f",res_max$cor,res_max$lag*myby,res_lrmax$cor,res_lrmax$lag * myby)
+	
 	message(td)
+	#readline(sprintf("Hit <return> for %s",td))
+	
+	
+	labelvals = c(-1,-laglim,0,laglim,1)
 	
 	if(doplot){
 		title(td, line = "-2")
-		axis(1, at = c(-50,0,50), labels = c(-0.5,0,0.5))
+		#axis(1, at = c(-mylagmax/2,0,mylagmax/2), labels = c(-0.5,0,0.5))
+		axis(1, at = mylagmax * labelvals, labels = labelvals)
 		axis(2)
 		#text(0,-0.4,td)
 	}
@@ -241,10 +279,10 @@ ba_ms_align <- function(ts,data,txlim,doplot=F){
 		
 		readline("hit <return> to close the plot window and carry on")
 		dev.off()
-		
+		plot.new()
 		#dev.set(dev.prev()) # go back to first
 		#reset the par
-		op
+		#op
 	}
 
 	return(out)
@@ -372,11 +410,22 @@ seqvmaldi <- function(){
 }
 
 
-load.analysis <- function(fn,gt,tf=T){
-	x<-read.table(fn,sep=",")
+
+load.analysis <- function(fn){
+
+	x<-read.table(fn,sep=",",, stringsAsFactors=FALSE)
 	colnames(x) <- c("sequence","position","length","fragno",
 	                 "plotno","ndeam","nhyd","cor","lag","pm1","pm5","energy","efrac")
 	x$plotno <- as.numeric(x$plotno)
+	
+	return(x)
+}
+
+
+#Used to be just 'load.analysis
+load.analysis.tf <- function(fn,gt,tf=T){
+
+	x <- load.analysis(fn)
 
 	if(tf){
 		d <- x[x$plotno %in% gt,]
@@ -539,6 +588,581 @@ gtanalysis <- function(scode,gt){
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ms_fit <- function(sheet,species,froot,scode,spots,doyn=T){
+
+	#Pick the 'ground truth' as small lag and high correlation
+	cor.threshold = 0.1
+	lag.threshold = 0.2	
+													# b  l  t  r	
+	par(mar=c(3.8,3.8,2.4,3.8), mfrow = c(1,1), oma=c(.1,.1,.2,.2))
+	layout(matrix(c(1,1,
+	                2,2,
+	                3,3,
+	                4,5
+	                ), 4, 2, byrow = TRUE))
+	#                5,5), 4, 2, byrow = TRUE))
+
+
+	x <- load.analysis(sprintf("%sanalysis.dat",scode))
+	
+	t <- x[which(x$cor > cor.threshold & abs(x$lag) < lag.threshold),]
+	f <- x[which(x$cor < cor.threshold | abs(x$lag) > lag.threshold),]
+	
+	xseqs  <- x[!duplicated(x$sequence),]
+
+	
+	
+	message("Loading master plot")
+	eraw <- read.table(sprintf("%s%s.txt",froot,spots[1]))
+	
+	e1<-eraw
+	
+	#create the matched peak set array
+	matchedpeaks <- e1
+	matchedpeaks[,2]=0
+	
+	gxlim = c(800,3200)		
+
+	finished = F
+	
+	
+	
+	#create a polynomial
+	set.seed(20)
+	message("Making model")
+	ts <- t[ order(t$pm1), ]
+	model <- lm(ts$lag ~ poly(ts$pm1,3))
+	pi <- predict(model,data.frame(x=ts$pm1,interval='confidence',level=0.99))
+	
+	#We need this scale because we are going to remove peaks from e1
+	ms_yscale <-max(e1[,2])
+	
+	
+	
+	#ok now lets go through each peak in the ms
+	while(!finished){
+
+		message(sprintf("%d theoretical peaksets remaining",nrow(t)))
+
+		cca <- t[which(t$energy == max(t$energy)),]
+		
+		message(sprintf("Found %d peaks with highest ion count",nrow(cca)))
+		
+		for(ii in 1:nrow(cca)){
+		
+			cc <- cca[ii,]
+			
+			message(sprintf("Current highest peak has range %0.2f..%0.2f",cc$pm1,cc$pm5))
+		
+			#ff =  ALL peaks for this sequence
+			ff <- t[which(t$position == cc$position),]
+		
+			#remove cc from t
+			t <- t[-which(t$energy == max(t$energy)),]
+		
+			#To check we've removed only one peak: 
+			#message(sprintf("           %d  left....",nrow(t)))
+		
+			#Get the 'raw' peaks from the sequence - we'll add deamidations and hydroxylations later: 
+			
+			
+			message(sprintf("cc seqeunce is %s",cc$sequence))
+			#readline("Press<return> to get the peak data from the sequence")
+			cd1 <- q2e_tpeaks(cc$sequence)
+			#message("Counting the number of hydroxylations:")
+			nhyd <- str_count(cc$sequence,"P")
+			nglut <- str_count(cc$sequence,"Q") + str_count(cc$sequence,"N")
+
+
+			# Calculating ccxlim: originally, we only used the peaksets that were 'correct'
+			# but it may be better to see the *whole* range of potential changes to mass
+			#ccxlim = c(min(ff$pm1)-5,max(ff$pm1)+10)
+		
+			ccxlim = c(cd1$mass[1]-5, cd1$mass[1] + (nglut*0.984015)+(nhyd*16) + 10)
+
+
+
+
+			#TODO: We are assuming an analyis has been done and saved in C1analysis.dat!
+			#PLOT 1: THE RAW MASS SPECTRUM
+			plot(e1,type="l",xlab="Mass (Da)",ylab="Ion Count",xlim=gxlim,mgp=c(.6,0.6,.6),
+				ylim = c(0,ms_yscale),
+				main = sprintf("Global view. Target is for peptide %s, nDeam = %d, nHyd = %d",
+					cc$sequence,cc$ndeam,cc$nhyd
+					)
+			)	
+			lines(matchedpeaks,col="red",xlim=gxlim)
+			#Mass V lag - true only - overlaid on the mass plot
+			par(new=T)
+			plot(t$pm1+t$lag,t$lag,col="green",pch=20,
+					xlim=gxlim,
+					xaxt="n",yaxt="n",xlab="",ylab="cor",ylim=c(-0.25,0.25))		
+			lines(ts$pm1,pi,col='orange')
+			mtext("Cor",side=4,line=3)			
+			points(ff$pm1,ff$lag,col = "blue",pch=10)
+			points(cc$pm1,cc$lag,col = "red",pch=10,cex=3)
+		
+			
+			
+			#PLOT 2: Show all candidate peaks..
+			#calculate the range from the hydroxylations
+			mass_max <- cc$pm1
+			mass_min <- cc$pm1+10
+			nseqs=0;
+			for(xrow in 1:nrow(xseqs)){
+				c_nhyd  <- str_count(xseqs$sequence[xrow],"P")
+				c_nglut <- str_count(xseqs$sequence[xrow],"Q") + str_count(xseqs$sequence[xrow],"N")
+				message(sprintf("Sequence %s has %d hydroxylations and %d deamitation candidates",
+						xseqs$sequence[xrow],c_nhyd,c_nglut))
+				thiscc <-  q2e_tpeaks(cc$sequence)
+				#This next doesn't work because 
+				#message(sprintf("thiscc has %d rows",nrow(thiscc)))
+				
+				tmin <- thiscc$mass[1] 
+				tmax <- thiscc$mass[1] +(c_nglut*0.984015)+(c_nhyd*16) + 10
+				if(exists("cc$pm1") & exists("tmin") & exists("tmax")){
+					if(tmin < cc$pm1 & 
+					   tmax > cc$pm1){
+					   	mass_min <- tmin  
+					   	mass_max <- tmax
+					   	nseqs <- nseqs + 1
+					}
+				}
+				else{
+					message(sprintf("one of tmax,tmin,or cc$pm1 doesn't exist"))
+					#finished = T
+					break
+				}
+			}
+			#	
+			plot(NA,xlab="Mass (Da)",ylab="Ion Count",xlim=c(mass_min,mass_max),mgp=c(.3,0.3,.3),ylim=c(0,1),
+				main = sprintf("ALL Theoretical spectra around the target peak (random colours)")
+				)
+			
+			#readline(sprintf("nseqs is %d",nseqs))
+			#colours <- rainbow(nseqs)
+			cccolor = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
+			colours=sample(cccolor, nseqs)
+			
+			cseqs=0 
+			for(xrow in 1:nrow(xseqs)){
+				message(sprintf("DEBUG - iteration %d ",xrow))
+				thiscc <-  q2e_tpeaks(xseqs$sequence[xrow])
+				c_nhyd  <- str_count(xseqs$sequence[xrow],"P")
+				c_nglut <- str_count(xseqs$sequence[xrow],"Q") + str_count(xseqs$sequence[xrow],"N")
+				
+				tmin <- thiscc$mass[1] 
+				tmax <- thiscc$mass[1] +(c_nglut*0.984015)+(c_nhyd*16) + 10
+				if(tmin < cc$pm1 & 
+				   tmax > cc$pm1){
+				
+					message(sprintf("DEBUG: seq = %s ,x$pm1 = %0.3f",#, thiscc$mass[1] = %0.3f",
+									xseqs$sequence[xrow]
+									, xseqs$pm1[xrow] #-(x$nglut[xx]*0.984015) -(x$nhyd[xx]*16),
+									#thiscc$mass[1])
+									))
+								
+					cseqs <- cseqs+1
+					ccol <- colours[cseqs]
+					#readline(sprintf("Cseqs is %d",cseqs))
+					for(e in 0:c_nglut){
+						for( p in 0:c_nhyd){
+							
+							xx <- thiscc$mass +(e*0.984015)+(p*16)
+							yy <- thiscc$prob
+							message(sprintf("xrow[1] is %0.2f",xrow[1]))
+							segments(x0=xx, y0=yy, y1=0, col=ccol)
+							points(xx, yy, pch=21, col=ccol, bg=ccol)
+						}
+					}
+				}
+			}
+			lines(x=e1[,1],y=e1[,2]/ms_yscale)
+			lines(x=matchedpeaks[,1],y=matchedpeaks[,2]/ms_yscale,col="red")
+	
+			points(ff$pm1,ff$lag+0.5,col = "blue",pch=10,cex=2)	
+			points(cc$pm1,cc$lag+0.5,col = "red",pch=10,cex=3)
+		
+		
+		
+			#PLOT 3: Now zoom in to the target
+			#calculate the range from the hydroxylations
+			#	
+			plot(NA,type="l",xlab="Mass (Da)",ylab="Ion Count",xlim=ccxlim,mgp=c(.3,0.3,.3),ylim=c(0,1),
+				main = sprintf("Aligned view. Target is for peptide %s, nDeam = %d, nHyd = %d, peak at %0.1f\n significant peaksets are pink (others grey)",
+					cc$sequence,cc$ndeam,cc$nhyd,cc$pm1
+					))
+			#First draw all possible theoretical peaks...
+			for(e in 0:nglut){
+				for( p in 0:nhyd){
+					xx <- cd1$mass +(e*0.984015)+(p*16)
+					yy <- cd1$prob
+					segments(x0=xx, y0=yy, y1=0, col="grey80")
+					points(xx, yy, pch=21, col="grey80", bg="grey80")
+				}
+			}
+			#NOW Draw the GOOD theoretical peak matches:
+			message(sprintf("nrow(ff) = %d",nrow(ff)))
+			if(nrow(ff)>0){
+				for( i in 1:nrow(ff)){
+					xx <- cd1$mass +(ff$ndeam[i]*0.984015)+(ff$nhyd[i]*16)
+					yy <- cd1$prob
+					segments(x0=xx, y0=yy, y1=0, col="pink")
+					points(xx, yy, pch=21, col="pink", bg="pink")
+				}
+			}
+			lines(x=e1[,1],y=e1[,2]/ms_yscale)
+			lines(x=matchedpeaks[,1],y=matchedpeaks[,2]/ms_yscale,col="red",xlim=gxlim)
+			par(new=T)
+			plot(t$pm1,t$lag,col="green",pch=20,
+					xlim=ccxlim,
+					xaxt="n",yaxt="n",xlab="",ylab="",ylim=c(-0.25,0.25))	
+			lines(ts$pm1,pi,col='orange')
+			points(ff$pm1,ff$lag,col = "blue",pch=10,cex=2)	
+			points(cc$pm1,cc$lag,col = "red",pch=10,cex=3)
+		
+	
+		
+		
+	
+			#PLOT Lag v cor - true AND false
+			plot(f$lag,f$cor,xlab="Lag",ylab="cor",col="red",pch=20,
+					main="Lag vs Correlation\nall seqences",
+					xlim=c(-1,1),ylim=c(0,0.3),
+					#xlim=c(min(x$lag),max(x$lag)),
+					#ylim=c(min(x$cor),max(x$cor))
+					)		
+				
+			points(t$lag,t$cor,col="green",pch=20)
+		
+			points(ff$lag,ff$cor,col = "blue",pch=10,cex=2)
+			points(cc$lag,cc$cor,col = "red",pch=10,cex=3)
+
+
+
+
+
+			#PLOT Lag V cor - true only
+			plot(t$lag,t$cor,xlab="Lag",ylab="cor",col="green",pch=20,
+					xlim=c(-0.3,0.3),ylim=c(0.1,0.3),
+					main="Lag vs Correlation\ngood candidates",
+					)	
+			points(ff$lag,ff$cor,col = "blue",pch=10,cex=2)
+			points(cc$lag,cc$cor,col = "red",pch=10,cex=3)
+		
+		
+			answer = "q"
+			if(doyn){
+				answer <- ba_ynq("Does this theoretical peak match the data?")
+			}
+	
+		
+			if(answer == "Y" || answer == "y" || doyn ==F){
+		
+				#Move the MS intensities to the 
+				lbl <- min( cd1$mass) + (cc$ndeam*0.984015)+(cc$nhyd*16) - 0.5
+				ubl <- max( cd1$mass) + (cc$ndeam*0.984015)+(cc$nhyd*16) + 0.5
+		
+		
+				#message(sprintf("cc$ndeam is %f, cc
+				message(sprintf("min(cd1$mass) is %f, max is %f",min( cd1$mass),max( cd1$mass)))
+				message(sprintf("lbl is %f, ubl is %f",lbl,ubl))
+		
+				#In case of overlap, we have to *ADD* e1 to matchedpeaks...not *REPLACE*
+				matchedpeaks[     which(e1[,1] > lbl & e1[,1] < ubl),2] <-
+					#matchedpeaks[ which(e1[,1] > lbl & e1[,1] < ubl),2] 
+					#+
+					eraw[           which(e1[,1] > lbl & e1[,1] < ubl),2]
+		
+				#Set the remaining peakset to zero
+	 			e1[ which(e1[,1] > lbl & e1[,1] < ubl),2] <- 0
+			
+			
+			}
+			else{
+				answer <- ba_ynq("Do you want to quit?")
+				if(answer == "Y" || answer == "y"){
+					finished = T
+				}
+			}
+			
+			if(doyn)
+				readline("Hit <return> to do the next iteration\n\n")	
+	#		readline("Press <return> to do the next most intense peak")		
+		}	
+	}
+
+
+}
+
+
+
+
+
+#ranked_alignment_of_mass_spectrum
+rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F, scode, doccplot=F){
+
+	aa <- list()
+
+
+	message(sprintf("Ranking alignement with theoretical spectrum for %s",spp))
+	message(sprintf("Searching for %s...",spp))
+
+	spidx<-ts_index(sheet,spp)
+	if(spidx<0){
+		return
+	}
+
+	###################################################
+	message(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
+
+	endcol<-ncol(sheet)	
+
+	message("Calculating sequences now")
+	start<-4
+	count<-1
+
+	moff = 1.5
+	
+	plotno=0;
+	
+	#TODO: Use this variable to check whether the expression rate is single or double
+	#There's a marker in the mammalian collagen file.
+	times_expressed = 1;
+	
+	#TODO: figure out the best way to look this up in the Mammalin Collagen Sequences sheet
+	ANU = 1061 
+	 
+	 
+	#outfn1 = ("analysis1.dat")
+	#outfn2 = ("analysis2.dat")
+	#outfn3 = ("analysis3.dat")
+	
+	
+	outfn1 <- sprintf("%sanalysis.dat",scode[1])
+	
+	
+	#write_header(outfn1)
+	##ad1 <- NA #new_align_df()
+	#ad2 <- new_align_df()
+	#ad3 <- new_align_df()
+	 	 
+ 	message(sprintf("%d:\t",count),appendLF=F)
+	for(j in start:endcol){
+		#TODO: reject non a-a entries
+		if(grepl("K|R",sheet[spidx,j])){
+
+			mybg = 1 #Set 'standard' pinhead colour to red
+
+			count<-count+1
+			message(sprintf("%s\n%d:\t",sheet[spidx,j],count),appendLF=F)
+			end=j
+			#to make the string, do something like:
+			#cc <- paste0(shit[85,4:12],collapse="")
+
+			sequence <- paste0(sheet[spidx,start:end],collapse="")
+
+			nhyd <- str_count(sequence,"P")
+
+			nglut <- str_count(sequence,"Q") + str_count(sequence,"N")
+
+			message(sprintf("Generating spectrum for sequence %s ...",sequence,appendLF=F))
+
+			cd1 <- q2e_tpeaks(sequence)
+
+			###########################################################
+			#RESTRICTION: Only do this for the range we have data for #
+			if(max(cd1$mass) > 800 && min(cd1$mass) < 3500){
+			
+				message(sprintf("Sequence is %s\nThere are %d prolines in this segment",sequence,nhyd))
+				message(sprintf("There are %d glutamines  in this segment",nglut))
+	
+				message(sprintf("Mass range is %f to %f",min(cd1$mass),max(cd1$mass)))
+			
+				cc=0;
+				for(e in 0:nglut){
+					for( p in 0:nhyd){
+					
+					
+#grab the data for the range we are intested in 
+#xm <-       testdata[[spot]]@mass[myxlim[1] <= testdata[[spot]]@mass & testdata[[spot]]@mass < myxlim[2] ]
+#yi <-  testdata[[spot]]@intensity[myxlim[1] <= testdata[[spot]]@mass & testdata[[spot]]@mass < myxlim[2] ]
+			
+						lbl <- min(cd1$mass) - moff + (e*0.984015)+(p*16)
+						ubl <- max(cd1$mass) + moff + (e*0.984015)+(p*16)
+								
+						subms1 <- ms_subrange(ms1,lbl,ubl)
+						subms2 <- ms_subrange(ms2,lbl,ubl)
+						subms3 <- ms_subrange(ms3,lbl,ubl)
+					
+						#Only bother if the energy is there	
+						#if(max(subms1[,2]) > (0.1*max(ms1[,2])) ){
+						
+						mir <- 0.05
+						
+						if(max(subms1[,2]) > (mir*max(ms1[,2])) ){
+							message(sprintf("Max intensity  ratio sufficient in this segment (%f > %f) ", max(subms1[,2]), mir*max(ms1[,2]) ))
+					
+							plotno = plotno+1
+			
+							message(sprintf("\nPlot number %d\nSegment at position %d of %d",
+									plotno,j-4,endcol-4))
+							#0.984015 - if Q changes to E - add this much....
+			
+							myxlim = c(lbl,ubl)
+							#TODO: start-4 is used a few times - so it needs setting as a variable		
+							mymain <- sprintf("plot %d, seqpos %d\n%s\nnglut = %d/%d, nhyd = %d/%d",plotno,start-4,sequence,e,nglut,p,nhyd)
+							plot(1, type="n", xlab="Mass", ylab = "Probability", 
+									xlim=myxlim, ylim=c(0, 1), main=mymain)
+							
+							legend('topright',c(scode[2],scode[3],scode[4],'pre-align'), lty = c(1,1,1,1),
+								   col=c('red','green','blue','grey'),ncol=1,bty ="n")
+			
+							#ba_plotseqpeaks(cd1,myxlim)
+				
+							cc = cc+1;
+							x <- cd1$mass +(e*0.984015)+(p*16)
+							y <- cd1$prob
+							
+							cdshift <-cd1
+							cdshift$mass <- cd1$mass +(e*0.984015)+(p*16)
+							
+							segments(x0=x, y0=y, y1=0, col=8)
+							points(x, y, pch=21, col=1+e, bg=mybg+p)
+						
+							message(sprintf("Calculating alignment for sequence %s, #%d of %d, 1stMass: %0.2f nglut: %d, nhyd %d\n",
+									sequence, cc,(nglut+1)*(nhyd+1),x[1],e,p))
+							
+							#plot the peaks
+							#ms_peaklineplot <- function(sms,ms,col)
+							
+							#/Calculate the shift (if any) */
+						
+							
+							
+							ms_offset_peaklineplot(ms1,0,"grey")
+							ms_offset_peaklineplot(ms2,0,"grey")
+							ms_offset_peaklineplot(ms3,0,"grey")
+							
+										
+							#readline(" Press <return> to do the alignment")
+						
+							#align1 <- ba_ms_align(cdshift,subms1,myxlim,doplot=T)
+							align1 <- ba_ms_align(cdshift,subms1,myxlim)
+							message(sprintf("red:   cor = %0.3f, lag = %0.3f",align1$cor,align1$lag))
+							#sequence,position,length,fragno,plotno,cor,lag,pm1,energy,efrac
+							
+							subms1[,1] = subms1[,1] + align1$lag
+							#ms_peaklineplot(subms1,ms1,"red")
+							ms_offset_peaklineplot(ms1,align1$lag,"red")
+						
+							write.table(
+								t(c(
+									#sequence,position,length,fragno,plotno,
+									sequence,start-4,end-start,count,plotno,
+									#ndean,nhyd
+									e,p,
+									#cor,      lag,        
+									align1$cor,align1$lag,
+									#pm1,pm5,energy,efrac
+									x[1],x[5],sum(subms1[,2]), sum(subms1[,2]) / sum(ms1[,2])
+									)),
+								file = outfn1,append=T,sep = ",", row.names = F, col.names = F)
+						
+							
+							align2 <- ba_ms_align(cdshift,subms2,myxlim)
+							message(sprintf("green: cor = %0.3f, lag = %0.3f",align2$cor,align2$lag))
+							subms2[,1] = subms2[,1] + align2$lag
+							ms_offset_peaklineplot(ms2,align2$lag,"green")
+							
+							
+							align3 <- ba_ms_align(cdshift,subms3,myxlim)
+							message(sprintf("blue:  cor = %0.3f, lag = %0.3f",align3$cor,align3$lag))
+							subms3[,1] = subms3[,1] + align3$lag
+							ms_offset_peaklineplot(ms3,align3$lag,"blue")
+							
+							
+							
+							
+							if(dopause){		
+								readline("hit <return> to look at the next segment\n\n")
+							}
+						}
+						else{
+							message(sprintf("Max intensity  ratio too small in this segment (%f/%f)", max(subms1[,2]), max(ms1[,2]) ))
+						}
+					}
+				}
+				
+				
+				
+				#plot(d1[,1],d1[,2]/max(d1[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method K: 1,Norfolk (black); 6,Italy (red)")
+				#lines(i1[,1],i1[,2]/max(i1[,2]), col = "red")
+				
+				#plot(d2[,1],d2[,2]/max(d2[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method I: 1,Norfolk (black); 6,Italy (red)")
+				#lines(i2[,1],i2[,2]/max(i2[,2]), col = "red")
+				
+				#plot(d3[,1],d3[,2]/max(d3[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method C: 1,Norfolk (black), 6,Italy (red)")
+				#lines(i3[,1],i3[,2]/max(i3[,2]), col = "red")
+				
+				#readline("hit <return> to look at the next segment")
+
+			}
+			message("done")
+			
+
+
+			#readline("hit <return> to continue...\n")
+			start = j+1
+ 		}
+ 		else{
+ 			message(sprintf("%s",sheet[spidx,j]),appendLF=F)
+ 		}	 	
+	 }
+	 
+	 #return(ad1)
+}
+
+
+
+generate_alignment_pdf <- function(froot,scode,spots,species = "human"){
+
+	
+	anfn <- sprintf("%sanalysis.dat",scode)
+	#Delete the analyisis file
+	if(file.exists(anfn))
+		file.remove(anfn)
+	
+	e1 <- read.table(sprintf("%s%s.txt",froot,spots[1]))
+	e2 <- read.table(sprintf("%s%s.txt",froot,spots[2]))
+	e3 <- read.table(sprintf("%s%s.txt",froot,spots[3]))
+	
+	par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
+	pdf(file = sprintf("%s.pdf",scode),w=6,h=4)
+		al <- rams(sheet,species,e1,e2,e3,dopause=F,c(scode,spots),doccplot=T)
+	dev.off()
+
+	#TODO: We'll need to do an absoulute fit, but this is NOT practical here...
+	#readline("Press <return> to do absolute fit now")
+	#ms_fit(sheet,species,froot,scode,spots)
+
+}
+
 
 
 

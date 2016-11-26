@@ -50,10 +50,16 @@ I'm going to show you two packages that you should know about:
 - **Swirl** - Friendly R tutorials
 - **devtools** - ways to help you oragnise your code into packages from the outset. (More of this)
 
+
+
+
+
 ---
 ##Learning R with Swirl
 
 Packages can be about anything. 'Swirl' is a good package to start with, because it contains tutorials for learning R.
+
+
 
 Let's install swirl using the RStudio menu: 
    *tools->install packages...*
@@ -64,6 +70,24 @@ Alternatively, at the command line (in the bottom left panel of RStudio) type
 ```
    install.packages("swirl")
 ```
+
+####Troubleshooting write permissions problems
+
+If you are using RStudio on a Windows machine where you do not have admin privileges, you may encounter problems when installing packages, because R might try and put the package files in a directory that you cannot write to. If you get an error indicating problems with write permissions, have a look at the following, from [http://stackoverflow.com/questions/15170399/changing-r-default-library-path-using-libpaths-in-rprofile-site-fails-to-work] :
+
+"The proper solution is to set environment variable `R_LIBS_USER` to the value of the file path to your desired library folder as opposed to getting RStudio to recognize a Rprofile.site file.
+
+To set environment variable `R_LIBS_USER` in Windows, go to the Control Panel (System Properties -> Advanced system properties -> Environment Variables -> User Variables) to a desired value (the path to your library folder), e.g.
+
+```
+Variable name: R_LIBS_USER 
+Variable value: C:/software/Rpackages  
+```
+
+Setting `R_LIBS_USER` will ensure that the library shows up first in .libPaths() regardless of starting RStudio directly or by right-clicking an file and "Open With" to start RStudio."
+
+
+##Loading the package
 
 **REMEMBER!** *Installing* a package is not the same as *loading* a package so that you can use it. Think of installing a package as like buying a book and putting it on your bookshelf. You can't read it while it's on the shelf - you have to hold it first. Similarly, you have to load the package before you can use it, using the `library` command:
 

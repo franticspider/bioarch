@@ -98,7 +98,7 @@ gths <- function(sheet, spp, d1, d2, d3, d4, d5, i1, i2, i3, i4, i5){
 			
 			message(sprintf("Generating spectrum for sequence %s ...",sequence,appendLF=F))
 
-			cd1 <- q2e_isodists(sequence)
+			cd1 <- q2e_tpeaks(sequence)
 			lbl <- min(cd1$mass) - moff
 			ubl <- max(cd1$mass) + moff
 			
@@ -285,227 +285,6 @@ write_alignrow <- function(fn,sep=',',sequence,position,length,fragno,plotno,cor
 
 
 
-#ranked_alignment_of_mass_spectrum
-rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F, scode){
-
-	aa <- list()
-
-
-	message(sprintf("Ranking alignement with theoretical spectrum for %s",spp))
-	message(sprintf("Searching for %s...",spp))
-
-	spidx<-ts_index(sheet,spp)
-	if(spidx<0){
-		return
-	}
-
-	###################################################
-	message(sprintf("Match for %s found at index %d, now calculating spectrum", spp, spidx))
-
-	endcol<-ncol(sheet)	
-
-	message("Calculating sequences now")
-	start<-4
-	count<-1
-
-	moff = 1.5
-	
-	plotno=0;
-	
-	#TODO: Use this variable to check whether the expression rate is single or double
-	#There's a marker in the mammalian collagen file.
-	times_expressed = 1;
-	
-	#TODO: figure out the best way to look this up in the Mammalin Collagen Sequences sheet
-	ANU = 1061 
-	 
-	 
-	#outfn1 = ("analysis1.dat")
-	#outfn2 = ("analysis2.dat")
-	#outfn3 = ("analysis3.dat")
-	
-	
-	outfn1 <- sprintf("%sanalysis.dat",scode[1])
-	
-	
-	#write_header(outfn1)
-	##ad1 <- NA #new_align_df()
-	#ad2 <- new_align_df()
-	#ad3 <- new_align_df()
-	 	 
- 	message(sprintf("%d:\t",count),appendLF=F)
-	for(j in start:endcol){
-		#TODO: reject non a-a entries
-		if(grepl("K|R",sheet[spidx,j])){
-
-			mybg = 1 #Set 'standard' pinhead colour to red
-
-			count<-count+1
-			message(sprintf("%s\n%d:\t",sheet[spidx,j],count),appendLF=F)
-			end=j
-			#to make the string, do something like:
-			#cc <- paste0(shit[85,4:12],collapse="")
-
-			sequence <- paste0(sheet[spidx,start:end],collapse="")
-
-			nhyd <- str_count(sequence,"P")
-
-			nglut <- str_count(sequence,"Q") + str_count(sequence,"N")
-
-			message(sprintf("Generating spectrum for sequence %s ...",sequence,appendLF=F))
-
-			cd1 <- q2e_isodists(sequence)
-
-			###########################################################
-			#RESTRICTION: Only do this for the range we have data for #
-			if(max(cd1$mass) > 800 && min(cd1$mass) < 3500){
-			
-				message(sprintf("Sequence is %s\nThere are %d prolines in this segment",sequence,nhyd))
-				message(sprintf("There are %d glutamines  in this segment",nglut))
-	
-				message(sprintf("Mass range is %f to %f",min(cd1$mass),max(cd1$mass)))
-			
-				cc=0;
-				for(e in 0:nglut){
-					for( p in 0:nhyd){
-					
-					
-#grab the data for the range we are intested in 
-#xm <-       testdata[[spot]]@mass[myxlim[1] <= testdata[[spot]]@mass & testdata[[spot]]@mass < myxlim[2] ]
-#yi <-  testdata[[spot]]@intensity[myxlim[1] <= testdata[[spot]]@mass & testdata[[spot]]@mass < myxlim[2] ]
-			
-						lbl <- min(cd1$mass) - moff + (e*0.984015)+(p*16)
-						ubl <- max(cd1$mass) + moff + (e*0.984015)+(p*16)
-								
-						subms1 <- ms_subrange(ms1,lbl,ubl)
-						subms2 <- ms_subrange(ms2,lbl,ubl)
-						subms3 <- ms_subrange(ms3,lbl,ubl)
-					
-						#Only bother if the energy is there	
-						#if(max(subms1[,2]) > (0.1*max(ms1[,2])) ){
-						if(max(subms1[,2]) > (0.05*max(ms1[,2])) ){
-							message(sprintf("Max intensity  ratio sufficient in this segment (%f > %f) ", max(subms1[,2]), 0.1*max(ms1[,2]) ))
-					
-							plotno = plotno+1
-			
-							message(sprintf("\nPlot number %d\nSegment at position %d of %d",
-									plotno,j-4,endcol-4))
-							#0.984015 - if Q changes to E - add this much....
-			
-							myxlim = c(lbl,ubl)
-							#TODO: start-4 is used a few times - so it needs setting as a variable		
-							mymain <- sprintf("plot %d, seqpos %d\n%s\nnglut = %d/%d, nhyd = %d/%d",plotno,start-4,sequence,e,nglut,p,nhyd)
-							plot(1, type="n", xlab="Mass", ylab = "Probability", 
-									xlim=myxlim, ylim=c(0, 1), main=mymain)
-							
-							legend('topright',c(scode[2],scode[3],scode[4],'pre-align'), lty = c(1,1,1,1),
-								   col=c('red','green','blue','grey'),ncol=1,bty ="n")
-			
-							#ba_plotseqpeaks(cd1,myxlim)
-				
-							cc = cc+1;
-							x <- cd1$mass +(e*0.984015)+(p*16)
-							y <- cd1$prob
-							
-							cdshift <-cd1
-							cdshift$mass <- cd1$mass +(e*0.984015)+(p*16)
-							
-							segments(x0=x, y0=y, y1=0, col=8)
-							points(x, y, pch=21, col=1+e, bg=mybg+p)
-						
-							message(sprintf("Calculating alignment for sequence %s, #%d of %d, 1stMass: %0.2f nglut: %d, nhyd %d\n",
-									sequence, cc,(nglut+1)*(nhyd+1),x[1],e,p))
-							
-							#plot the peaks
-							#ms_peaklineplot <- function(sms,ms,col)
-							
-							#/Calculate the shift (if any) */
-						
-							
-							
-							ms_offset_peaklineplot(ms1,0,"grey")
-							ms_offset_peaklineplot(ms2,0,"grey")
-							ms_offset_peaklineplot(ms3,0,"grey")
-							
-										
-							#readline(" Press <return> to do the alignment")
-						
-							#align1 <- ba_ms_align(cdshift,subms1,myxlim,doplot=T)
-							align1 <- ba_ms_align(cdshift,subms1,myxlim)
-							message(sprintf("red:   cor = %0.3f, lag = %0.3f",align1$cor,align1$lag))
-							#sequence,position,length,fragno,plotno,cor,lag,pm1,energy,efrac
-							
-							subms1[,1] = subms1[,1] + align1$lag
-							#ms_peaklineplot(subms1,ms1,"red")
-							ms_offset_peaklineplot(ms1,align1$lag,"red")
-						
-							write.table(
-								t(c(
-									#sequence,position,length,fragno,plotno,
-									sequence,start-4,end-start,count,plotno,
-									#ndean,nhyd
-									e,p,
-									#cor,      lag,        
-									align1$cor,align1$lag,
-									#pm1,pm5,energy,efrac
-									x[1],x[5],sum(subms1[,2]), sum(subms1[,2]) / sum(ms1[,2])
-									)),
-								file = outfn1,append=T,sep = ",", row.names = F, col.names = F)
-						
-							
-							align2 <- ba_ms_align(cdshift,subms2,myxlim)
-							message(sprintf("green: cor = %0.3f, lag = %0.3f",align2$cor,align2$lag))
-							subms2[,1] = subms2[,1] + align2$lag
-							ms_offset_peaklineplot(ms2,align2$lag,"green")
-							
-							
-							align3 <- ba_ms_align(cdshift,subms3,myxlim)
-							message(sprintf("blue:  cor = %0.3f, lag = %0.3f",align3$cor,align3$lag))
-							subms3[,1] = subms3[,1] + align3$lag
-							ms_offset_peaklineplot(ms3,align3$lag,"blue")
-							
-							
-							
-							
-							if(dopause){		
-								readline("hit <return> to look at the next segment\n\n")
-							}
-						}
-						else{
-							message(sprintf("Max intensity  ratio too small in this segment (%f/%f)", max(subms1[,2]), max(ms1[,2]) ))
-						}
-					}
-				}
-				
-				
-				
-				#plot(d1[,1],d1[,2]/max(d1[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method K: 1,Norfolk (black); 6,Italy (red)")
-				#lines(i1[,1],i1[,2]/max(i1[,2]), col = "red")
-				
-				#plot(d2[,1],d2[,2]/max(d2[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method I: 1,Norfolk (black); 6,Italy (red)")
-				#lines(i2[,1],i2[,2]/max(i2[,2]), col = "red")
-				
-				#plot(d3[,1],d3[,2]/max(d3[,2]),type="l",xlim=myxlim, ylim=c(0,1), bty='l', main = "Method C: 1,Norfolk (black), 6,Italy (red)")
-				#lines(i3[,1],i3[,2]/max(i3[,2]), col = "red")
-				
-				#readline("hit <return> to look at the next segment")
-
-			}
-			message("done")
-			
-
-
-			#readline("hit <return> to continue...\n")
-			start = j+1
- 		}
- 		else{
- 			message(sprintf("%s",sheet[spidx,j]),appendLF=F)
- 		}	 	
-	 }
-	 
-	 #return(ad1)
-}
-
 
 #NB: you need to have run theoretical_spectra.R before calling this, which makes the item 'sheets'
 #This makes the pdf 'keri2.pdf' that was sent in email to matthew and keri, 1 Nov 2016 
@@ -618,40 +397,18 @@ if(!exists("sheet")){
 #	G13	G14	G15	H13	H15	I13	I14	I15	G22	G23	G24	H22	H24	I22	I23	I24	J7	J8	J9	K7				
 
 
-generate_alignment_pdf <- function(froot,scode,spots){
 
-	anfn <- sprintf("%sanalysis.dat",scode)
-	#Delete the analyisis file
-	if(file.exists(anfn))
-		file.remove(anfn)
-	
-	e1 <- read.table(sprintf("%s%s.txt",froot,spots[1]))
-	e2 <- read.table(sprintf("%s%s.txt",froot,spots[2]))
-	e3 <- read.table(sprintf("%s%s.txt",froot,spots[3]))
-	
-	par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
-	pdf(file = sprintf("%s.pdf",scode),w=6,h=4)
-		al <- rams(sheet,"human",e1,e2,e3,dopause=F,c(scode,spots))
-	dev.off()
-}
+#readline("Press <return> to do interactive analysis of sample C1")
+#ms_fit(sheet,"human","~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C1",c("G7","G10","G13"))
 
 
 
-#TODO: We can't automate yet because we haven't got ground truth - instead we must generate analyses
 
-##TODO: really, we want to open the file and close it - the following is a bit crude
-#system("rm C1analysis.dat")
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G7.txt"
-#e1 <- read.table(fn)
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G10.txt"
-#e2 <- read.table(fn)
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G13.txt"
-#e3 <- read.table(fn)
-#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
-#pdf(file = "C1.pdf",w=6,h=4)
-#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C1","G7","G10","G13"))
-#dev.off()
 
+
+
+
+###########################################################################
 generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C1",
 		c("G7","G10","G13"))
 #gt<-c(3,5,8,9,10,12,14,23,31,32,38,39,42,44,45,51,52,59,64,68,69,72,79,85,86,87)
@@ -662,19 +419,13 @@ gt<- c(3,5,7,10,14,16,23,24,25,26,29,30,35,44,57,58,65,66,67,70,73,74,80,82,85,9
 message("Doing analysis now")
 gtanalysis("C1",gt)
 
-#readline("Did it work?")
-#
-#system("rm C2analysis.dat")
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G8.txt"
-#e1 <- read.table(fn)
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G11.txt"
-#e2 <- read.table(fn)
-#fn <- "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_G14.txt"
-#e3 <- read.table(fn)
-#par(mar=c(3.8,3.8,3,1), mfrow = c(1,1), oma=c(2,2,2,2))
-#pdf(file = "C2.pdf",w=6,h=4)
-#	al <- rams(sheet,"human",e1,e2,e3,dopause=F,c("C2","G8","G11","G14"))
-#dev.off()
+
+
+
+
+
+
+
 generate_alignment_pdf("~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C2",
 		c("G8","G11","G14"))
 gtc2 <- c(3,4,5,8,11,12,17,18,19,24,29,40,41,44,46,47,53,54,63,67,73,79,80,96,97)
