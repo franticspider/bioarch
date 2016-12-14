@@ -23,9 +23,13 @@ roxygenize(".")
 
 setwd("..")
 
+message("Bioarch! installing! now!")
+
 
 install("bioarch")
 
+
+message("Successfully installed bioarch!")
 
 
 

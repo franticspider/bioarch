@@ -57,17 +57,17 @@ if(!exists("sheet")){
 #readline("Press <return> to do interactive analysis of sample C1")
 
 ###################################################################################
-#pdf(file = "C1byhand_v2.pdf",w=8,h=8)
-#ms_fit(sheet,"human","~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C1",c("G7","G10","G13"),doyn=F)
-#dev.off()
+pdf(file = "C1byhand_v2.pdf",w=8,h=8)
+ms_fit(sheet,"human","~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_","C1",c("G7","G10","G13"),doyn=F)
+dev.off()
 
-#froot = "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_"
-#spots = c("D4","D7","D10")
-#sample = "N1"
-#generate_alignment_pdf(froot, sample, spots)
-#pdf(file = "N1byhand_v2.pdf",w=8,h=8)
-#ms_fit(sheet,"human",froot,sample,spots,doyn=F)
-#dev.off()
+froot = "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_"
+spots = c("D4","D7","D10")
+sample = "N1"
+generate_alignment_pdf(froot, sample, spots)
+pdf(file = "N1byhand_v2.pdf",w=8,h=8)
+ms_fit(sheet,"human",froot,sample,spots,doyn=F)
+dev.off()
 
 ###################################################################################
 #froot = "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_"
@@ -88,18 +88,18 @@ if(!exists("sheet")){
 #dev.off()
 
 ###################################################################################
-#froot = "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_"
-#spots = c("I7","I10","I13")
-#sample = "C6"
-#generate_alignment_pdf(froot, sample, spots)
-#pdf(file = "C6byhand_v2.pdf",w=8,h=8)
-#ms_fit(sheet,"human",froot,sample,spots,doyn=F)
-#dev.off()
+froot = "~/tmp/bioarch_keri/20160909_Keri13/20160909_Keri13_0_"
+spots = c("I7","I10","I13")
+sample = "C6"
+generate_alignment_pdf(froot, sample, spots)
+pdf(file = "C6byhand_v2.pdf",w=8,h=8)
+ms_fit(sheet,"human",froot,sample,spots,doyn=F)
+dev.off()
 
 
 froot = "~/tmp/bioarch_keri/20160803_Keri12/20160803_Keri12_0_"
 spots = c("F4","F7","F10")
-sample = "N1"
+sample = "N6"
 generate_alignment_pdf(froot, sample, spots, species = "sheep")
 pdf(file = "N6byhand_v2.pdf",w=8,h=8)
 ms_fit(sheet,"human",froot,sample,spots,doyn=F)

@@ -3,9 +3,11 @@ Title: What the Package Does (one line, title case)
 Version: 0.0.0.9000
 Authors@R: person("Simon", "Hickinbotham", email = "simon.hickinbotham@york.ac.uk", role = c("aut", "cre"))
 Description: utilities for the bioarch dataset
-Depends: R (>= 3.0.0)
+Depends:
+    R (>= 3.0.0)
 License: What license is it under?
 LazyData: true
 Imports:
     dplyr,
     MALDIquant
+RoxygenNote: 5.0.1
