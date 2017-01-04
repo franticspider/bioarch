@@ -8,8 +8,6 @@ ba_peptides_from_sequence <- function (sheet,spp="human",verbose=T,moff = 1){
 
 
 	 spidx<-ts_index(sheet,spp)
-
-
 	 endcol<-ncol(sheet)	
 	 	
 	 message("Calculating sequences now")
@@ -1083,11 +1081,11 @@ get_hydroxylations <- function(sheet,start,end,dopause=T){
 	readline("Couldn't find the hydroxylation row - check the sheet!\nhit <return> to continue")
 	}
 	
-	message("pos\tprob")
+	#message("pos\tprob")
 	#TODO: this is redundant if the method below works...
-	for(i in start:end){
-		message(sprintf("%d\t%f",i,sheet[hidx,i]))
-	}
+	#for(i in start:end){
+	#	message(sprintf("%d\t%f",i,sheet[hidx,i]))
+	#}
 
 	#TODO: Check this is a better method:
 	d <- as.numeric(sheet[hidx,start:end])
@@ -1118,7 +1116,7 @@ get_hydroxylations <- function(sheet,start,end,dopause=T){
 
 
 
-
+#TODO: Generate the matches in MASS order (makes subsequent processing much easier!
 #ranked_alignment_of_mass_spectrum
 rams <- function(sheet, spp, ms1, ms2, ms3, dopause=F, scode, doccplot=F){
 

@@ -232,7 +232,7 @@ compare_two_spectra <- function(tss, froot1, sample1, spots1, froot2, sample2, s
 
 
 
-#site_ratios <- function(){
+site_ratios <- function(){
 
 	nsamples <- 10	
 	Csample<-list()
@@ -255,7 +255,60 @@ compare_two_spectra <- function(tss, froot1, sample1, spots1, froot2, sample2, s
 	}
 	
 	sd <- load.phyd("C1_hprobs.dat")
-	plot(NA,ylim=c(0.001,maxeratio),xlim=c(0,maxhyd+0.5),ylab="Fraction of total ion count",xlab="Number of hydroxylations",log="y")
+	
+	pdf(file="NIratios.pdf",w=8,h=8)
+	
+	par(mar=c(3.8,3.8,3,1), mfrow = c(2,1), oma=c(2,2,2,2))
+	
+	plot(NA,ylim=c(0.001,maxeratio),xlim=c(0,maxhyd+0.5),ylab="Fraction of total ion count",xlab="Number of hydroxylations",
+	#log="y",
+	main="method C")
+	
+	#Now let's try and plot some lines...
+	CNh <- rep(list(NA),(maxhyd+1))#length=maxhyd+1)
+	NNh <- rep(list(NA),(maxhyd+1))#length=maxhyd+1)
+	CIh <- rep(list(NA),(maxhyd+1))#length=maxhyd+1)
+	NIh <- rep(list(NA),(maxhyd+1))#length=maxhyd+1)
+	
+	CNhmean = vector(length=length(CNh))
+	NNhmean = vector(length=length(CNh))
+	CIhmean = vector(length=length(CNh))
+	NIhmean = vector(length=length(CNh))
+	
+	for(i in 1:5){
+		points(x=Csample[[i]]$nhyd-0.1,y=Csample[[i]]$efrac,pch=1,col="red")
+		for(h in 0:maxhyd){
+			CNh[[(h+1)]] <- c(CNh[[(h+1)]],Csample[[i]]$efrac[which(Csample[[i]]$nhyd == h)])
+		}	
+	}
+	
+	for(i in 6:10){
+		points(x=Csample[[i]]$nhyd+0.1,y=Csample[[i]]$efrac,pch=1,col="green")
+		for(h in 0:maxhyd){
+			CIh[[h+1]] <- c(CIh[[h+1]],Csample[[i]]$efrac[which(Csample[[i]]$nhyd == h)])
+		}
+	}
+	
+	for(gg in 0:maxhyd+1){
+	                  #mean(CNh[[1]][2:length(CNh[[1]])])
+		CNhmean[gg] <- mean(CNh[[gg]][2:length(CNh[[gg]])])
+		CIhmean[gg] <- mean(CIh[[gg]][2:length(CIh[[gg]])])
+		
+	}
+	
+	
+	lines(x=c(0:6)-0.1,y=CNhmean)
+	points(x=c(0:6)-0.1,cex=1.5,y=CNhmean)
+
+	lines(x=c(0:6)+0.1,y=CIhmean,col="blue")
+	points(x=c(0:6)+0.1,cex=1.5,y=CIhmean,col="blue")
+	
+	legend('topright', col= c("red","green","black","blue"), lty = c(0,0,1,1),pch=1,
+		legend=c("Norfolk","Italy","mean Norfolk","mean Italy"),cex=0.75)
+	
+	plot(NA,ylim=c(0.001,0.12),xlim=c(0,maxhyd+0.5),ylab="Fraction of total ion count",xlab="Number of hydroxylations",
+	#log="y",
+	main="method N")
 	
 	#Now let's try and plot some lines...
 	CNh <- rep(list(NA),(maxhyd+1))#length=maxhyd+1)
@@ -270,12 +323,10 @@ compare_two_spectra <- function(tss, froot1, sample1, spots1, froot2, sample2, s
 	NIhmean = vector(length=length(CNh))
 	
 	for(i in 1:5){
-		points(x=Csample[[i]]$nhyd,y=Csample[[i]]$efrac,pch=1,col="red")
 	
-		points(x=Nsample[[i]]$nhyd+0.1,y=Nsample[[i]]$efrac,pch=2,col="red")
+		points(x=Nsample[[i]]$nhyd-0.1,y=Nsample[[i]]$efrac,pch=2,col="red")
 		
 		for(h in 0:maxhyd){
-			CNh[[(h+1)]] <- c(CNh[[(h+1)]],Csample[[i]]$efrac[which(Csample[[i]]$nhyd == h)])
 			NNh[[(h+1)]] <- c(NNh[[(h+1)]],Nsample[[i]]$efrac[which(Nsample[[i]]$nhyd == h)])
 		}
 		
@@ -283,14 +334,11 @@ compare_two_spectra <- function(tss, froot1, sample1, spots1, froot2, sample2, s
 	
 	
 	
-	
+	#italy
 	for(i in 6:10){
-		points(x=Csample[[i]]$nhyd+0.2,y=Csample[[i]]$efrac,pch=1,col="green")
-	
-		points(x=Nsample[[i]]$nhyd+0.3,y=Nsample[[i]]$efrac,pch=2,col="green")
+		points(x=Nsample[[i]]$nhyd+0.1,y=Nsample[[i]]$efrac,pch=2,col="green")
 		
 		for(h in 0:maxhyd){
-			CIh[[h+1]] <- c(CIh[[h+1]],Csample[[i]]$efrac[which(Csample[[i]]$nhyd == h)])
 			NIh[[h+1]] <- c(NIh[[h+1]],Nsample[[i]]$efrac[which(Nsample[[i]]$nhyd == h)])
 		}
 	}
@@ -298,37 +346,23 @@ compare_two_spectra <- function(tss, froot1, sample1, spots1, froot2, sample2, s
 	
 	for(gg in 0:maxhyd+1){
 	                  #mean(CNh[[1]][2:length(CNh[[1]])])
-		CNhmean[gg] <- mean(CNh[[gg]][2:length(CNh[[gg]])])
 		NNhmean[gg] <- mean(NNh[[gg]][2:length(NNh[[gg]])])
-		CIhmean[gg] <- mean(CIh[[gg]][2:length(CIh[[gg]])])
-		NIhmean[gg] <- mean(NIh[[gg]][2:length(NIh[[gg]])])
-		
-		message(sprintf("%d\t%0.3f\t%0.3f\t%0.3f\t%0.3f",
-		gg,CNhmean[gg],NNhmean[gg],CIhmean[gg],NIhmean[gg]))
-		
+		NIhmean[gg] <- mean(NIh[[gg]][2:length(NIh[[gg]])])		
 	}
-	
-	
-	lines(x=c(0:6),y=CNhmean,col="brown")
-	points(x=c(0:6),cex=1.5,y=CNhmean,col="brown")
+			
+	lines(x=c(0:6)-0.1,y=NNhmean)
+	points(x=c(0:6)-0.1,cex=1.5,y=NNhmean,pch=2)
 
-	lines(x=c(0:6)+0.2,y=CIhmean,col="pink")
-	points(x=c(0:6)+0.2,cex=1.5,y=CIhmean,col="pink")
-	
-	
-	
-	
-	lines(x=c(0:6)+0.1,y=NNhmean)
-	points(x=c(0:6)+0.1,cex=1.5,y=NNhmean)
+	lines(x=c(0:6)+0.1,y=NIhmean,col="blue")
+	points(x=c(0:6)+0.1,cex=1.5,y=NIhmean,col="blue",pch=2)
 
-	lines(x=c(0:6)+0.3,y=NIhmean,col="blue")
-	points(x=c(0:6)+0.3,cex=1.5,y=NIhmean,col="blue")
+	legend('topright', col= c("red","green","black","blue"), lty = c(0,0,1,1),pch=2,
+		legend=c("Norfolk","Italy","mean Norfolk","mean Italy"),cex=0.75)
+			
+	mtext("Hydroxylation levels, Norfolk vs Italy for methods C and N", outer = TRUE, cex = 1.2)
 	
-	
-	
-	
-	
-#}
+	dev.off()
+}
 
 
 
